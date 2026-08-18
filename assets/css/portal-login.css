@@ -1,0 +1,493 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
+
+:root {
+    --pl-deep:   #0f2e29;
+    --pl-700:    #147a63;
+    --pl-600:    #178f74;
+    --pl-500:    #1fae82;
+    --pl-400:    #58c9a0;
+    --pl-100:    #e3f5ee;
+    --pl-50:     #f3faf7;
+    --pl-ink:    #16241f;
+    --pl-muted:  #6b8079;
+    --pl-line:   #e9f1ee;
+    --pl-red:    #d9534f;
+    --pl-radius: 24px;
+
+    /* Staff portal uses a distinct navy palette (matches the Staff
+       card accent on the landing page) so the two login pages never
+       read as "the same page in a different mood". */
+    --st-deep:   #0f1a2b;
+    --st-700:    #2b3a52;
+    --st-600:    #34435d;
+    --st-500:    #47597a;
+    --st-400:    #7688a6;
+    --st-100:    #e8ebf1;
+    --st-50:     #f5f6f9;
+    --st-line:   #dfe3ea;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+}
+
+html, body.login-page { height: 100%; }
+
+body.login-page {
+    position: relative;
+    min-height: 100vh;
+    overflow-x: hidden;
+    background:
+        radial-gradient(circle at 12% 12%, #eafaf3, transparent 55%),
+        radial-gradient(circle at 88% 88%, #e4f6ef, transparent 55%),
+        var(--pl-50);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 20px;
+    -webkit-font-smoothing: antialiased;
+    animation: plBodyFade .5s ease both;
+}
+
+body.login-page.is-staff {
+    background:
+        radial-gradient(circle at 12% 12%, #eef0f5, transparent 55%),
+        radial-gradient(circle at 88% 88%, #e7eaf1, transparent 55%),
+        var(--st-50);
+}
+
+@keyframes plBodyFade { from { opacity: 0; } to { opacity: 1; } }
+
+/* =========================================================
+   INTERACTIVE BACKGROUND
+   Canvas (drifting/mouse-reactive geometric shapes, drawn by
+   portal-bg.js) + two slow-floating gradient orbs behind it.
+   ========================================================= */
+
+.portal-bg-canvas {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+    display: block;
+}
+
+.portal-orb {
+    position: fixed;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 0;
+    opacity: .6;
+    filter: blur(6px);
+}
+
+.portal-orb-a {
+    width: 440px;
+    height: 440px;
+    top: -160px;
+    left: -140px;
+    background: radial-gradient(circle, rgba(31,174,130,.30), rgba(31,174,130,0) 70%);
+    animation: plOrbFloatA 15s ease-in-out infinite alternate;
+}
+
+.portal-orb-b {
+    width: 380px;
+    height: 380px;
+    bottom: -170px;
+    right: -110px;
+    background: radial-gradient(circle, rgba(20,122,99,.26), rgba(20,122,99,0) 70%);
+    animation: plOrbFloatB 18s ease-in-out infinite alternate;
+}
+
+@keyframes plOrbFloatA { from { transform: translate(0,0); } to { transform: translate(60px, 46px); } }
+@keyframes plOrbFloatB { from { transform: translate(0,0); } to { transform: translate(-50px, -40px); } }
+
+.is-staff .portal-orb-a {
+    background: radial-gradient(circle, rgba(43,58,82,.28), rgba(43,58,82,0) 70%);
+}
+.is-staff .portal-orb-b {
+    background: radial-gradient(circle, rgba(15,26,43,.24), rgba(15,26,43,0) 70%);
+}
+
+/* =========================================================
+   BACK TO HOME
+   ========================================================= */
+
+.portal-back-home {
+    position: fixed;
+    top: 24px;
+    left: 24px;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14.5px;
+    font-weight: 700;
+    color: var(--pl-700);
+    text-decoration: none;
+    background: #fff;
+    padding: 10px 18px 10px 14px;
+    border-radius: 999px;
+    box-shadow: 0 6px 18px rgba(15, 46, 41, .12);
+    transition: color .2s ease, transform .2s ease, box-shadow .2s ease;
+    animation: plFadeUp .5s ease both;
+}
+.portal-back-home svg { width: 18px; height: 18px; }
+.portal-back-home:hover { transform: translateX(-2px); box-shadow: 0 8px 22px rgba(15, 46, 41, .18); }
+
+.is-staff .portal-back-home { color: var(--st-700); }
+
+/* =========================================================
+   CARD
+   ========================================================= */
+
+.portal-card-wrap {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 440px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.portal-card {
+    position: relative;
+    width: 100%;
+    background: #fff;
+    border-radius: var(--pl-radius);
+    box-shadow: 0 24px 60px rgba(15, 46, 41, .16), 0 2px 10px rgba(15,46,41,.06);
+    padding: 40px 36px 32px;
+    overflow: hidden;
+    animation: plCardIn .6s cubic-bezier(.2,.85,.25,1.1) both;
+}
+
+@keyframes plCardIn {
+    from { opacity: 0; transform: translateY(28px) scale(.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.portal-card::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 6px;
+    background: linear-gradient(90deg, var(--pl-deep), var(--pl-600), var(--pl-400), var(--pl-600), var(--pl-deep));
+    background-size: 240% 100%;
+    animation: plTopBarMove 7s ease infinite;
+}
+@keyframes plTopBarMove { 0% { background-position: 0% 0; } 50% { background-position: 100% 0; } 100% { background-position: 0% 0; } }
+
+.is-staff .portal-card::before {
+    background: linear-gradient(90deg, var(--st-deep), var(--st-600), var(--st-400), var(--st-600), var(--st-deep));
+    background-size: 240% 100%;
+}
+
+/* -------- badge icon -------- */
+
+.portal-card-badge {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+.portal-card-badge .badge-ic {
+    position: relative;
+    width: 68px;
+    height: 68px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--pl-600), var(--pl-400));
+    color: #fff;
+    box-shadow: 0 10px 24px rgba(31,174,130,.35);
+    animation: plBadgePop .55s cubic-bezier(.34,1.56,.64,1) both;
+}
+.portal-card-badge.is-staff .badge-ic {
+    background: linear-gradient(135deg, var(--st-600), var(--st-deep));
+    box-shadow: 0 10px 24px rgba(15,26,43,.4);
+}
+.portal-card-badge svg { width: 32px; height: 32px; }
+@keyframes plBadgePop { from { opacity: 0; transform: scale(.6) rotate(-8deg); } to { opacity: 1; transform: scale(1) rotate(0); } }
+
+.portal-badge-chip {
+    display: block;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    color: var(--pl-700);
+    margin-bottom: 8px;
+    animation: plFadeUp .5s ease .05s both;
+}
+
+.is-staff .portal-badge-chip { color: var(--st-700); }
+
+.portal-card h2 {
+    text-align: center;
+    font-size: 23px;
+    font-weight: 700;
+    color: var(--pl-ink);
+    margin-bottom: 6px;
+    animation: plFadeUp .5s ease .1s both;
+}
+
+.portal-subtitle {
+    text-align: center;
+    font-size: 13.5px;
+    color: var(--pl-muted);
+    line-height: 1.55;
+    margin-bottom: 22px;
+    animation: plFadeUp .5s ease .16s both;
+}
+
+@keyframes plFadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* -------- error -------- */
+
+.portal-error {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #fdecea;
+    border-left: 3px solid var(--pl-red);
+    color: var(--pl-red);
+    font-size: 13px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    animation: plShake .4s ease;
+}
+.portal-error svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+.portal-success {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--pl-100);
+    border-left: 3px solid var(--pl-500);
+    color: var(--pl-700);
+    font-size: 13px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    animation: plFadeUp .4s ease;
+}
+.portal-success svg { width: 16px; height: 16px; flex-shrink: 0; }
+@keyframes plShake {
+    10%, 90% { transform: translateX(-1px); }
+    20%, 80% { transform: translateX(2px); }
+    30%, 50%, 70% { transform: translateX(-4px); }
+    40%, 60% { transform: translateX(4px); }
+}
+
+/* =========================================================
+   FORM
+   ========================================================= */
+
+.portal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.portal-input-group {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    animation: plFadeUp .5s ease .22s both;
+}
+.portal-input-group:nth-of-type(2) { animation-delay: .28s; }
+
+.portal-input-group label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--pl-muted);
+    padding-left: 2px;
+}
+
+.portal-input-group input {
+    width: 100%;
+    height: 48px;
+    padding: 0 42px;
+    border: 1.5px solid var(--pl-line);
+    border-radius: 13px;
+    background: var(--pl-50);
+    color: var(--pl-ink);
+    font-family: inherit;
+    font-size: 13.5px;
+    outline: none;
+    transition: background .2s ease, border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+.portal-input-group input::placeholder { color: #9aa9a5; }
+.portal-input-group input:focus {
+    background: #fff;
+    border-color: var(--pl-500);
+    box-shadow: 0 0 0 4px rgba(31,174,130,.14);
+    transform: translateY(-1px);
+}
+
+.is-staff .portal-input-group input:focus {
+    border-color: var(--st-500);
+    box-shadow: 0 0 0 4px rgba(71,89,122,.16);
+}
+
+.pig-icon {
+    position: absolute;
+    left: 13px;
+    bottom: 15px;
+    width: 18px;
+    height: 18px;
+    color: var(--pl-600);
+    display: flex;
+    pointer-events: none;
+}
+.pig-icon svg { width: 100%; height: 100%; }
+
+.is-staff .pig-icon { color: var(--st-600); }
+
+.pig-toggle {
+    position: absolute;
+    right: 7px;
+    bottom: 7px;
+    width: 34px;
+    height: 34px;
+    border: none;
+    background: transparent;
+    color: var(--pl-muted);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: color .2s ease, background .2s ease;
+}
+.pig-toggle:hover { color: var(--pl-700); background: var(--pl-100); }
+.pig-toggle svg { width: 17px; height: 17px; position: absolute; transition: opacity .15s ease, transform .15s ease; }
+.pig-toggle .eye-off { opacity: 0; transform: scale(.6); }
+.pig-toggle .eye-on  { opacity: 1; transform: scale(1); }
+.pig-toggle.is-visible .eye-on  { opacity: 0; transform: scale(.6); }
+.pig-toggle.is-visible .eye-off { opacity: 1; transform: scale(1); }
+
+.is-staff .pig-toggle:hover { color: var(--st-700); background: var(--st-100); }
+
+.portal-forgot-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: -6px;
+    animation: plFadeUp .5s ease .3s both;
+}
+.portal-forgot-row a {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--pl-600);
+    text-decoration: none;
+}
+.portal-forgot-row a:hover { text-decoration: underline; color: var(--pl-700); }
+
+.is-staff .portal-forgot-row a { color: var(--st-600); }
+.is-staff .portal-forgot-row a:hover { color: var(--st-700); }
+
+.portal-submit {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    height: 48px;
+    margin-top: 4px;
+    border: none;
+    border-radius: 13px;
+    background: linear-gradient(135deg, var(--pl-500), var(--pl-700));
+    color: #fff;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: .01em;
+    cursor: pointer;
+    box-shadow: 0 10px 24px rgba(31,174,130,.28);
+    transition: transform .2s ease, box-shadow .2s ease, background .3s ease;
+    animation: plFadeUp .5s ease .34s both;
+}
+.portal-submit::before {
+    content: "";
+    position: absolute;
+    top: 0; left: -100%;
+    width: 60%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.30), transparent);
+    transform: skewX(-20deg);
+    transition: left .5s ease;
+}
+.portal-submit:hover::before { left: 130%; }
+.portal-submit:hover { transform: translateY(-2px); box-shadow: 0 14px 28px rgba(31,174,130,.36); }
+.portal-submit:active { transform: translateY(0); }
+
+.portal-card-badge.is-staff ~ .portal-form .portal-submit,
+.is-staff .portal-submit {
+    background: linear-gradient(135deg, var(--st-500), var(--st-deep));
+    box-shadow: 0 10px 24px rgba(15,26,43,.32);
+}
+
+/* =========================================================
+   SWITCH NOTE + FOOTER
+   ========================================================= */
+
+.portal-switch-note {
+    text-align: center;
+    font-size: 12.5px;
+    color: var(--pl-muted);
+    padding-top: 16px;
+    border-top: 1px solid var(--pl-line);
+    animation: plFadeUp .5s ease .4s both;
+}
+.portal-switch-note a {
+    color: var(--pl-700);
+    font-weight: 700;
+    text-decoration: none;
+}
+.portal-switch-note a:hover { text-decoration: underline; }
+
+.is-staff .portal-switch-note a { color: var(--st-700); }
+
+.portal-card-footer {
+    position: relative;
+    z-index: 1;
+    margin-top: 22px;
+    font-size: 12px;
+    color: var(--pl-muted);
+    text-align: center;
+    opacity: .85;
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 480px) {
+    .portal-card { padding: 32px 22px 26px; }
+    .portal-card h2 { font-size: 21px; }
+}
+
+@media (max-width: 380px) {
+    body.login-page { padding: 20px 14px; }
+    .portal-back-home { top: 14px; left: 14px; padding: 8px 14px 8px 11px; font-size: 13px; }
+}
+
+/* =========================================================
+   REDUCED MOTION
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: .001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .001ms !important;
+    }
+}

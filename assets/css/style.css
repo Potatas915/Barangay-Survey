@@ -1,0 +1,1475 @@
+/* =========================================================
+   Barangay Health Center — UI theme
+   Rebuilt as a soft, modern "fintech dashboard" style:
+   rounded cards, blue gradients, gentle shadows, motion.
+   All original class names are preserved so no PHP markup
+   had to change — only staff_nav.php was restructured into
+   a sidebar.
+   ========================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
+
+:root {
+    --blue-900: #123832;
+    --blue-700: #147a63;
+    --blue-600: #178f74;
+    --blue-500: #1fae82;
+    --blue-400: #58c9a0;
+    --blue-100: #e3f5ee;
+    --blue-50:  #f3faf7;
+    --ink: #16241f;
+    --muted: #6b8079;
+    --line: #e9f1ee;
+    --bg: #f5f8f7;
+    --white: #ffffff;
+    --green: #17c383;
+    --red: #ef4a63;
+    --amber: #f5a623;
+    --radius-lg: 22px;
+    --radius-md: 16px;
+    --radius-sm: 10px;
+    --shadow-card: 0 10px 30px rgba(18, 56, 50, 0.07);
+    --shadow-pop: 0 16px 40px rgba(18, 56, 50, 0.14);
+    --sidebar-w: 232px;
+    --sidebar-w-collapsed: 80px;
+}
+
+/* Collapsed sidebar: set as early as possible (inline snippet in <head>,
+   same pattern as the dark-mode toggle) so the layout doesn't flash wide
+   before JS runs. Because --sidebar-w drives both the sidebar's own width
+   and the content offset below, overriding it here is all that's needed. */
+html[data-sidebar="collapsed"] { --sidebar-w: var(--sidebar-w-collapsed); }
+
+/* =========================================================
+   DARK MODE
+   Same variable names, dark values, toggled by setting
+   data-theme="dark" on <html>. Because every component below
+   is built with var(--x) instead of hardcoded colors, this
+   block alone re-themes the entire app.
+   ========================================================= */
+html[data-theme="dark"] {
+    --blue-900: #0b1917;
+    --blue-700: #1fae82;
+    --blue-600: #24c393;
+    --blue-500: #2fd9a6;
+    --blue-400: #5fe3bc;
+    --blue-100: #17332d;
+    --blue-50:  #131f1c;
+    --ink: #eef5f2;
+    --muted: #90a49d;
+    --line: #24322e;
+    --bg: #0c1412;
+    --white: #16211f;
+    --green: #35e3a4;
+    --red: #ff7086;
+    --amber: #ffc164;
+    --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.45);
+    --shadow-pop: 0 18px 44px rgba(0, 0, 0, 0.55);
+}
+
+html[data-theme="dark"] .error { background: #3a1620; border-left-color: var(--red); }
+html[data-theme="dark"] .success { background: #0f2b22; border-left-color: var(--green); }
+html[data-theme="dark"] .question-block { background: #101a18; }
+html[data-theme="dark"] ::-webkit-scrollbar-thumb { background: var(--blue-100); }
+html[data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: var(--blue-400); }
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+}
+
+html { scroll-behavior: smooth; overflow-x: hidden; }
+
+body {
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* subtle page-load fade */
+body { animation: bodyFade .5s ease both; }
+@keyframes bodyFade { from { opacity: 0; } to { opacity: 1; } }
+
+a { color: inherit; }
+
+/* =========================================================
+   TOP NAVBAR (resident pages, login screens)
+   ========================================================= */
+
+.navbar {
+    background: linear-gradient(120deg, var(--blue-700), var(--blue-500));
+    color: #fff;
+    padding: 18px 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 0 0 24px 24px;
+    box-shadow: var(--shadow-pop);
+    position: sticky;
+    top: 0;
+    z-index: 40;
+}
+
+.navbar h2 {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: .2px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.navbar h2::before {
+    content: "";
+    display: inline-block;
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    background: rgba(255,255,255,.22);
+    background-image: radial-gradient(circle at 30% 30%, rgba(255,255,255,.9), rgba(255,255,255,0) 60%);
+}
+
+.navbar > div {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.navbar span {
+    font-size: 13px;
+    font-weight: 500;
+    opacity: .9;
+    margin-right: 10px;
+    padding: 6px 14px;
+    background: rgba(255,255,255,.14);
+    border-radius: 999px;
+}
+
+.navbar a {
+    color: #fff;
+    text-decoration: none;
+    margin-left: 6px;
+    font-size: 13.5px;
+    font-weight: 500;
+    padding: 8px 14px;
+    border-radius: 999px;
+    transition: background .2s ease, transform .2s ease;
+}
+
+.navbar a:hover {
+    background: rgba(255,255,255,.16);
+    text-decoration: none;
+    transform: translateY(-1px);
+}
+
+.navbar a.active {
+    background: #fff;
+    color: var(--blue-700);
+    border-radius: 999px;
+    padding: 8px 16px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+/* =========================================================
+   STAFF SIDEBAR (includes/staff_nav.php)
+   ========================================================= */
+
+.sidebar {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    bottom: 16px;
+    width: var(--sidebar-w);
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+    z-index: 40;
+    animation: slideInLeft .5s ease both;
+    transition: width .22s ease, padding .22s ease;
+}
+
+@keyframes slideInLeft { from { opacity: 0; transform: translateX(-16px); } to { opacity: 1; transform: translateX(0); } }
+
+/* Collapse toggle — a small round tab sitting on the sidebar's edge */
+.sidebar-toggle {
+    position: absolute;
+    top: 22px;
+    right: -12px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--white);
+    color: var(--blue-700);
+    border: 1.5px solid var(--line);
+    box-shadow: var(--shadow-card);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    z-index: 41;
+    transition: background .18s ease, box-shadow .18s ease, transform .22s ease;
+}
+.sidebar-toggle svg { width: 13px; height: 13px; transition: transform .22s ease; }
+.sidebar-toggle:hover { background: var(--blue-50); box-shadow: var(--shadow-pop); }
+html[data-sidebar="collapsed"] .sidebar-toggle svg { transform: rotate(180deg); }
+
+/* Collapsed state: icon rail only, labels hidden */
+html[data-sidebar="collapsed"] .sidebar { padding: 20px 12px; align-items: center; }
+html[data-sidebar="collapsed"] .sidebar-brand { padding: 4px 0 20px; justify-content: center; }
+html[data-sidebar="collapsed"] .sidebar-brand-text,
+html[data-sidebar="collapsed"] .sidebar-user,
+html[data-sidebar="collapsed"] .sidebar-links a .label,
+html[data-sidebar="collapsed"] .logout-link .label,
+html[data-sidebar="collapsed"] .sidebar-footer .label {
+    display: none;
+}
+html[data-sidebar="collapsed"] .sidebar-brand,
+html[data-sidebar="collapsed"] .sidebar-links,
+html[data-sidebar="collapsed"] .logout-link,
+html[data-sidebar="collapsed"] .sidebar-footer {
+    width: 100%;
+}
+html[data-sidebar="collapsed"] .sidebar-links a,
+html[data-sidebar="collapsed"] .logout-link {
+    justify-content: center;
+    padding: 11px;
+}
+html[data-sidebar="collapsed"] .sidebar-footer {
+    justify-content: center;
+    padding: 10px;
+}
+
+/* Mobile sidebar already becomes a horizontal bar — collapse is a
+   desktop-only affordance, so ignore any stored collapsed state here. */
+@media (max-width: 900px) {
+    .sidebar-toggle { display: none; }
+    html[data-sidebar="collapsed"] .sidebar-brand-text,
+    html[data-sidebar="collapsed"] .sidebar-links a .label,
+    html[data-sidebar="collapsed"] .logout-link .label,
+    html[data-sidebar="collapsed"] .sidebar-footer .label {
+        display: revert;
+    }
+}
+
+.sidebar-brand {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 4px 8px 22px;
+    font-weight: 800;
+    font-size: 13px;
+    color: var(--ink);
+    line-height: 1.3;
+    letter-spacing: .3px;
+}
+
+.logo-badge {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--blue-500), var(--blue-700));
+    box-shadow: 0 8px 16px rgba(20,122,99,.35);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+}
+.logo-badge svg { width: 20px; height: 20px; }
+
+.sidebar-brand-text { color: var(--blue-700); }
+.sidebar-brand-text small {
+    display: block;
+    color: var(--muted);
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: .2px;
+    margin-top: 4px;
+}
+
+.sidebar-user {
+    font-size: 12.5px;
+    color: var(--muted);
+    background: var(--blue-50);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    margin-bottom: 18px;
+    font-weight: 500;
+}
+
+.sidebar-user strong {
+    display: block;
+    color: var(--ink);
+    font-size: 13.5px;
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.sidebar-links {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.sidebar-links a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    color: var(--muted);
+    font-size: 13.5px;
+    font-weight: 500;
+    padding: 11px 14px;
+    border-radius: 12px;
+    transition: background .18s ease, color .18s ease, transform .18s ease, box-shadow .18s ease;
+}
+
+.sidebar-links a .ic {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    display: inline-flex;
+}
+.sidebar-links a .ic svg { width: 100%; height: 100%; }
+
+.sidebar-links a:hover {
+    background: var(--blue-50);
+    color: var(--blue-700);
+    transform: translateX(2px);
+}
+
+.sidebar-links a.active {
+    background: linear-gradient(120deg, var(--blue-600), var(--blue-500));
+    color: #fff;
+    font-weight: 600;
+    box-shadow: 0 10px 20px rgba(23,143,116,.35);
+}
+
+.logout-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    color: var(--red);
+    font-size: 13.5px;
+    font-weight: 500;
+    padding: 11px 14px;
+    border-radius: 12px;
+    margin-top: 10px;
+    transition: background .18s ease, transform .18s ease;
+}
+.logout-link .ic { width: 18px; height: 18px; display: inline-flex; }
+.logout-link .ic svg { width: 100%; height: 100%; }
+.logout-link:hover { background: #fdecef; transform: translateX(2px); }
+
+.sidebar-footer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 14px;
+    padding: 14px;
+    border-radius: var(--radius-md);
+    background: var(--blue-50);
+    color: var(--blue-700);
+    font-size: 11.5px;
+    font-weight: 600;
+    line-height: 1.4;
+}
+.sidebar-footer-ic {
+    width: 30px; height: 30px; flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--white);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--blue-600);
+}
+.sidebar-footer-ic svg { width: 15px; height: 15px; }
+
+/* body offset so content clears the fixed sidebar */
+body:has(.sidebar) {
+    padding-left: calc(var(--sidebar-w) + 32px);
+    padding-top: 16px;
+    padding-bottom: 16px;
+    transition: padding-left .22s ease;
+}
+
+@media (max-width: 900px) {
+    body:has(.sidebar) { padding-left: 18px; padding-top: 92px; }
+    .sidebar {
+        top: 12px; left: 12px; right: 12px; bottom: auto; width: auto;
+        flex-direction: row; align-items: center; padding: 12px 16px;
+        overflow-x: auto;
+    }
+    .sidebar-user { display: none; }
+    .sidebar-links { flex-direction: row; }
+    .sidebar-brand { padding: 0 14px 0 0; }
+}
+
+/* =========================================================
+   LAYOUT
+   ========================================================= */
+
+.container {
+    max-width: 1440px;
+    margin: 0 auto 22px;
+    padding: 0 24px 32px;
+}
+
+/* =========================================================
+   CARDS
+   ========================================================= */
+
+.card {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    padding: 22px 24px;
+    box-shadow: var(--shadow-card);
+    margin-bottom: 18px;
+    border: 1px solid rgba(43,76,168,.04);
+    animation: cardIn .45s ease both;
+    transition: box-shadow .25s ease, transform .25s ease;
+}
+
+.card:hover { box-shadow: var(--shadow-pop); }
+
+@keyframes cardIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+.card h2 {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 12px;
+}
+
+/* nested "sub" cards (e.g. results.php question blocks use inline bg) */
+.card .card {
+    box-shadow: none;
+    border: 1px solid var(--line);
+}
+.card .card:hover { box-shadow: none; }
+
+/* =========================================================
+   LOGIN SCREENS
+   ========================================================= */
+
+.login-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 24px;
+    background:
+        radial-gradient(circle at 15% 20%, rgba(255,255,255,.18), transparent 40%),
+        radial-gradient(circle at 85% 80%, rgba(255,255,255,.14), transparent 45%),
+        linear-gradient(135deg, var(--blue-700), var(--blue-500) 60%, var(--blue-400));
+}
+
+.login-box {
+    background: var(--white);
+    padding: 44px 40px;
+    border-radius: var(--radius-lg);
+    width: 380px;
+    max-width: 100%;
+    box-shadow: 0 30px 60px rgba(20, 30, 80, .35);
+    animation: popIn .5s cubic-bezier(.2,.9,.3,1.2) both;
+}
+
+@keyframes popIn { from { opacity: 0; transform: translateY(18px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+.login-box h2 {
+    margin-bottom: 6px;
+    color: var(--ink);
+    font-size: 22px;
+    font-weight: 800;
+}
+
+.login-box p {
+    color: var(--muted);
+    font-size: 13px;
+    margin-bottom: 22px;
+    line-height: 1.5;
+}
+
+/* =========================================================
+   FORM ELEMENTS
+   ========================================================= */
+
+label {
+    display: block;
+    font-size: 12.5px;
+    font-weight: 600;
+    margin: 14px 0 6px;
+    color: var(--ink);
+    letter-spacing: .2px;
+}
+
+input, select, textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    background: var(--blue-50);
+    color: var(--ink);
+    transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+}
+
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--blue-500);
+    background: var(--white);
+    box-shadow: 0 0 0 4px rgba(59,111,237,.14);
+}
+
+textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* =========================================================
+   BUTTONS
+   ========================================================= */
+
+button, .btn {
+    display: inline-block;
+    background: linear-gradient(120deg, var(--blue-600), var(--blue-700));
+    color: #fff;
+    border: none;
+    padding: 11px 22px;
+    border-radius: 999px;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 16px;
+    text-decoration: none;
+    box-shadow: 0 10px 20px rgba(59,111,237,.28);
+    transition: transform .18s ease, box-shadow .18s ease, filter .18s ease;
+    margin-bottom: 8px;
+}
+
+button:hover, .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 26px rgba(59,111,237,.36);
+    filter: brightness(1.03);
+}
+
+button:active, .btn:active { transform: translateY(0); }
+
+.btn-secondary {
+    background: var(--blue-50);
+    color: var(--blue-700);
+    box-shadow: none;
+    border: 1.5px solid var(--blue-100);
+}
+.btn-secondary:hover {
+    box-shadow: 0 8px 18px rgba(59,111,237,.14);
+    background: var(--white);
+}
+
+.btn-danger {
+    background: linear-gradient(120deg, #ff6b7f, var(--red));
+    box-shadow: 0 10px 20px rgba(239,74,99,.3);
+}
+
+.btn-reports{
+    margin-top: 3px;
+    margin-left: 15px;
+    background: var(--blue-50);
+    color: var(--blue-700);
+    box-shadow: none;
+    border: 1.5px solid var(--blue-100);
+    border-radius: 25px;
+    font-size: 11px;
+    text-align: center;
+    padding: 10px;
+    width: 70px;
+}
+
+/* Small pill buttons used for row-level table actions
+   (Edit / Questions / Results / Deactivate). Fixed width and a
+   locked 2-column grid keep every row identical -- no wrapping
+   surprises, no stretching to fit whichever label is longest.
+   (Restored — used on Survey Management and profile.php.) */
+.btn-sm {
+    padding: 6px 10px;
+    font-size: 11.5px;
+    margin-top: 0;
+    box-shadow: none;
+}
+.btn-sm:hover { box-shadow: 0 8px 16px rgba(23,143,116,.16); }
+
+.table-actions {
+    display: grid;
+    grid-template-columns: 96px 96px;
+    gap: 10px 40px;
+    width: 200px;
+}
+.table-actions .btn {
+    width: 130px;
+    height: 30px;
+    margin: 0;
+    font-size: 12px;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 3px;
+}
+
+.btn.btn-disabled {
+    background: var(--line) !important;
+    color: var(--muted) !important;
+    border: 1.5px solid var(--line) !important;
+    box-shadow: none !important;
+    font-weight: 500 !important;
+    cursor: not-allowed !important;
+}
+.btn.btn-disabled:hover {
+    transform: none !important;
+    box-shadow: none !important;
+    filter: none !important;
+    background: var(--line) !important;
+}
+
+.btn-success-soft {
+    background: #e7faf1;
+    color: #0f9d63;
+    border: 1.5px solid #bdeed7;
+    box-shadow: none;
+}
+.btn-success-soft:hover {
+    background: #d5f5e6;
+    box-shadow: 0 8px 18px rgba(23,195,131,.18);
+}
+
+/* =========================================================
+   ALERTS
+   ========================================================= */
+
+.error {
+    background: #fdecef;
+    color: var(--red);
+    padding: 12px 16px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    margin-bottom: 12px;
+    font-weight: 500;
+    border-left: 3px solid var(--red);
+    animation: shakeIn .4s ease both;
+}
+
+@keyframes shakeIn {
+    0% { transform: translateX(0); opacity: 0; }
+    30% { transform: translateX(-6px); opacity: 1; }
+    60% { transform: translateX(4px); }
+    100% { transform: translateX(0); }
+}
+
+.success {
+    background: #e7faf1;
+    color: #0f9d63;
+    padding: 12px 16px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    margin-bottom: 12px;
+    font-weight: 500;
+    border-left: 3px solid var(--green);
+}
+
+/* =========================================================
+   TABLES
+   ========================================================= */
+
+table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-top: 14px;
+    overflow: hidden;
+}
+
+/* Wrap a <table> in <div class="table-scroll">...</div> in
+   survey_management.php, resident_management.php, and reports.php.
+   On wide screens this is invisible; once the table would overflow
+   a narrow screen, it scrolls horizontally inside its own box
+   instead of breaking the layout or getting clipped by the
+   overflow-x: hidden rule set on html/body above. */
+.table-scroll {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+th, td {
+    text-align: left;
+    padding: 13px 14px;
+    font-size: 13.5px;
+}
+
+th {
+    background: var(--blue-50);
+    color: var(--blue-700);
+    font-weight: 700;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+}
+
+th:first-child { border-radius: 12px 0 0 12px; }
+th:last-child { border-radius: 0 12px 12px 0; }
+
+tbody tr { transition: background .15s ease; }
+tbody tr:hover { background: var(--blue-50); }
+tbody tr td { border-bottom: 1px solid var(--line); }
+
+/* =========================================================
+   SURVEY LIST / QUESTIONS
+   ========================================================= */
+
+.survey-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 16px;
+    border-radius: var(--radius-md);
+    margin-bottom: 10px;
+    background: var(--blue-50);
+    transition: transform .18s ease, box-shadow .18s ease;
+}
+
+.survey-list-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 22px rgba(43,76,168,.1);
+}
+
+.survey-list-item:last-child { margin-bottom: 0; }
+
+.rating-options, .choice-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.rating-options label, .choice-options label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13px;
+    font-weight: 500;
+    background: var(--blue-50);
+    padding: 9px 14px;
+    border-radius: 999px;
+    cursor: pointer;
+    margin: 0;
+    border: 1.5px solid transparent;
+    transition: border-color .16s ease, background .16s ease;
+}
+
+.rating-options label:hover, .choice-options label:hover {
+    border-color: var(--blue-400);
+}
+
+.rating-options input, .choice-options input {
+    width: auto;
+}
+
+.question-block {
+    padding: 18px;
+    border-radius: var(--radius-md);
+    border: 1.5px solid var(--line);
+    margin-bottom: 14px;
+    background: #fbfcff;
+}
+
+/* =========================================================
+   CHARTS
+   ========================================================= */
+
+.bar-chart {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 14px;
+}
+
+.bar-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.bar-track {
+    flex: 1;
+    background: var(--blue-50);
+    border-radius: 999px;
+    overflow: hidden;
+    height: 20px;
+}
+
+.bar-fill {
+    background: linear-gradient(90deg, var(--blue-500), var(--blue-700));
+    height: 100%;
+    border-radius: 999px;
+    width: 0;
+    animation: growBar 1s cubic-bezier(.22,.9,.3,1) forwards;
+}
+
+@keyframes growBar { from { width: 0 !important; } }
+
+/* =========================================================
+   TOPBAR (staff pages)
+   ========================================================= */
+
+.topbar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 16px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    animation: cardIn .4s ease both;
+}
+
+.topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.topbar-datetime, .topbar-profile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--white);
+    border-radius: var(--radius-md);
+    padding: 8px 16px;
+    box-shadow: var(--shadow-card);
+    font-size: 12.5px;
+    color: var(--ink);
+}
+.topbar-datetime svg { width: 18px; height: 18px; color: var(--blue-600); }
+.topbar-datetime strong, .topbar-profile strong { display: block; font-size: 12.5px; font-weight: 700; }
+.topbar-datetime small, .topbar-profile small { color: var(--muted); font-size: 11px; font-weight: 500; }
+
+.topbar-profile .avatar {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--blue-500), var(--blue-700));
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700;
+    font-size: 12.5px;
+}
+
+/* =========================================================
+   WELCOME HEADER
+   ========================================================= */
+
+.welcome-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.welcome-header h1 {
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.welcome-header .wave { display: inline-block; animation: waveHand 1.6s ease-in-out infinite; transform-origin: 70% 70%; }
+@keyframes waveHand { 0%,100% { transform: rotate(0deg); } 15% { transform: rotate(18deg); } 30% { transform: rotate(-8deg); } 45% { transform: rotate(14deg); } 60% { transform: rotate(0deg); } }
+
+.welcome-header p {
+    color: var(--muted);
+    font-size: 13.5px;
+    margin-top: 6px;
+}
+
+.welcome-date {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--white);
+    border-radius: var(--radius-md);
+    padding: 12px 18px;
+    box-shadow: var(--shadow-card);
+    font-size: 12.5px;
+}
+.welcome-date svg { width: 20px; height: 20px; color: var(--blue-600); }
+.welcome-date strong { display: block; font-weight: 700; color: var(--ink); }
+.welcome-date small { color: var(--muted); }
+
+/* =========================================================
+   QUICK ACTIONS (dashboard shortcut cards)
+   ========================================================= */
+
+.quick-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.quick-action-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--white);
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius-md);
+    padding: 14px;
+    text-decoration: none;
+    color: var(--ink);
+    transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.quick-action-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-pop);
+    border-color: transparent;
+}
+
+.quick-action-icon {
+    flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+    animation: quickIconPulse 3s ease-in-out infinite;
+}
+.quick-action-icon svg { width: 20px; height: 20px; }
+.quick-action-icon.teal { background: var(--blue-100); color: var(--blue-700); }
+.quick-action-icon.amber { background: #fdf0dc; color: var(--amber); }
+.quick-action-icon.green { background: #e2f8ee; color: var(--green); }
+
+.quick-action-card:hover .quick-action-icon {
+    transform: scale(1.12) rotate(-6deg);
+    animation-play-state: paused;
+}
+
+@keyframes quickIconPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(23,143,116,.18); }
+    50% { box-shadow: 0 0 0 6px rgba(23,143,116,0); }
+}
+
+.quick-action-text { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+.quick-action-text strong { font-size: 13.5px; font-weight: 700; }
+.quick-action-text small { color: var(--muted); font-size: 11.5px; }
+
+.quick-action-arrow {
+    font-size: 16px;
+    color: var(--blue-500);
+    opacity: 0;
+    transform: translateX(-6px);
+    transition: opacity .22s ease, transform .22s ease;
+}
+.quick-action-card:hover .quick-action-arrow {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* =========================================================
+   STAT CARDS  (white cards + icon badge + sparkline)
+   ========================================================= */
+
+.stat-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+@media (max-width: 1300px) {
+    .stat-cards-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 700px) {
+    .stat-cards-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+.stat-card {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    padding: 16px 18px;
+    box-shadow: var(--shadow-card);
+    transition: transform .2s ease, box-shadow .2s ease;
+    animation: cardIn .45s ease both;
+    min-width: 0;
+    overflow: hidden;
+}
+.stat-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-pop); }
+
+.stat-card-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.stat-ic {
+    width: 34px; height: 34px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+}
+.stat-ic svg { width: 17px; height: 17px; }
+.stat-ic.teal { background: var(--blue-100); color: var(--blue-700); }
+.stat-ic.amber { background: #fdf0dc; color: var(--amber); }
+.stat-ic.green { background: #e2f8ee; color: var(--green); }
+
+.stat-label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--muted);
+}
+
+.stat-number {
+    font-size: 23px;
+    font-weight: 800;
+    color: var(--ink);
+    margin-bottom: 10px;
+}
+
+/* Trend % + full "vs last month" label stay on one line whenever there's
+   room (neither ever shrinks/truncates). The sparkline stays compact and
+   only drops to its own line, right-aligned, on the tightest cards —
+   it never stretches to fill the card. */
+/* Single-row layout using fixed column tracks: the trend badge and
+   sparkline always get the same width no matter what text they hold,
+   so the label always starts and the sparkline always ends at the same
+   x-position across every card — no wasted vertical space, no
+   card-to-card misalignment. */
+.stat-trend-row {
+    display: grid;
+    grid-template-columns: minmax(0, auto) minmax(0, 1fr) minmax(0, auto);
+    column-gap: 6px;
+    align-items: center;
+}
+.stat-trend-row .trend {
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+.stat-trend-row .trend.up { color: var(--green); }
+.stat-trend-row .trend.down { color: var(--red); }
+.stat-trend-row small {
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+}
+.stat-trend-row .sparkline {
+    width: 44px;
+    height: 20px;
+    flex-shrink: 0;
+    justify-self: end;
+}
+
+/* =========================================================
+   TWO-TIER STAT HIERARCHY
+   Primary row = the 3 headline KPIs, bigger and bolder.
+   Secondary row = supporting counts, compact and quieter,
+   so the page doesn't read as "six equally loud boxes".
+   (Restored — used on the dashboard.)
+   ========================================================= */
+
+.stat-cards-grid-primary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    margin-bottom: 14px;
+}
+
+.stat-card-primary {
+    border-left: 4px solid var(--blue-600);
+    padding: 18px 20px;
+}
+.stat-card-primary .stat-card-top { margin-bottom: 8px; }
+.stat-card-primary .stat-ic { width: 38px; height: 38px; }
+.stat-card-primary .stat-ic svg { width: 18px; height: 18px; }
+.stat-card-primary .stat-label { font-size: 13px; }
+.stat-card-primary .stat-number { font-size: 27px; margin-bottom: 6px; }
+
+.stat-cards-grid-secondary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.stat-card-secondary {
+    padding: 12px 14px;
+    box-shadow: none;
+    border: 1px solid var(--line);
+}
+.stat-card-secondary:hover { transform: none; box-shadow: var(--shadow-card); }
+.stat-card-secondary .stat-card-top { margin-bottom: 6px; }
+.stat-card-secondary .stat-ic { width: 24px; height: 24px; border-radius: 7px; }
+.stat-card-secondary .stat-ic svg { width: 12px; height: 12px; }
+.stat-card-secondary .stat-label { font-size: 11px; }
+.stat-card-secondary .stat-number { font-size: 18px; margin-bottom: 4px; }
+.stat-card-secondary .sparkline { width: 46px; }
+
+/* =========================================================
+   DASHBOARD CHARTS (participation trend + donut)
+   ========================================================= */
+
+.dashboard-charts-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 16px;
+    align-items: stretch;
+}
+@media (max-width: 900px) { .dashboard-charts-row { grid-template-columns: 1fr; } }
+
+/* Long survey titles used to get squeezed right up against the
+   dropdown. The title now truncates with an ellipsis (full text
+   on hover) and the dropdown keeps a protected minimum width, so
+   the two never collide -- they wrap to their own line instead.
+   (This replaces the plain version that was overriding this fix.) */
+.chart-card-head {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+.chart-card-head h2 {
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.chart-card-head form {
+    width: 100%;
+}
+.chart-card-head select.donut-select {
+    width: 100%;
+    min-width: 170px;
+}
+.chart-range-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--blue-700);
+    background: var(--blue-50);
+    padding: 6px 14px;
+    border-radius: 999px;
+    flex-shrink: 0;
+}
+
+.trend-chart { width: 100%; height: 220px; margin-top: 10px; }
+.chart-axis-label { font-size: 10px; fill: var(--muted); font-family: 'Poppins', sans-serif; }
+
+.chart-x-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 6px;
+}
+
+.donut-card h2 { margin-bottom: 14px; }
+
+.donut-wrap {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+
+.donut {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    animation: donutIn .7s cubic-bezier(.2,.9,.3,1) both;
+}
+@keyframes donutIn { from { opacity: 0; transform: scale(.85) rotate(-40deg); } to { opacity: 1; transform: scale(1) rotate(0deg); } }
+
+.donut-hole {
+    width: 118px; height: 118px;
+    border-radius: 50%;
+    background: var(--white);
+    box-shadow: inset 0 2px 8px rgba(18,56,50,.06);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+}
+.donut-hole strong { font-size: 21px; font-weight: 800; color: var(--ink); }
+.donut-hole small { font-size: 11px; color: var(--muted); font-weight: 500; }
+
+.donut-legend { display: flex; flex-direction: column; gap: 10px; }
+.donut-legend-row { display: flex; align-items: center; gap: 8px; font-size: 12.5px; }
+.donut-legend-row .dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.donut-legend-row .legend-label { flex: 1; color: var(--ink); font-weight: 500; }
+.donut-legend-row .legend-value { color: var(--muted); font-weight: 600; font-size: 11.5px; }
+.donut-legend-total {
+    display: flex; justify-content: space-between;
+    font-size: 13px; font-weight: 700; color: var(--ink);
+    padding-top: 10px; margin-top: 4px; border-top: 1px solid var(--line);
+}
+
+.muted-note { color: var(--muted); font-size: 13px; line-height: 1.6; }
+
+/* =========================================================
+   DARK MODE TOGGLE SWITCH (lives in the topbar)
+   ========================================================= */
+
+.theme-switch {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 64px;
+    height: 32px;
+    border-radius: 999px;
+    border: none;
+    cursor: pointer;
+    padding: 0 8px;
+    background: var(--blue-50);
+    box-shadow: var(--shadow-card), inset 0 0 0 1.5px var(--line);
+    transition: background .3s ease, box-shadow .3s ease;
+    flex-shrink: 0;
+}
+
+.theme-switch:hover { box-shadow: var(--shadow-pop), inset 0 0 0 1.5px var(--line); }
+
+.theme-switch-icon {
+    width: 15px;
+    height: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    position: relative;
+    z-index: 1;
+    transition: color .3s ease;
+}
+.theme-switch-icon svg { width: 100%; height: 100%; }
+
+.theme-switch-thumb {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--blue-500), var(--blue-700));
+    box-shadow: 0 4px 10px rgba(23,143,116,.4);
+    transition: transform .35s cubic-bezier(.34,1.56,.64,1), background .3s ease, box-shadow .3s ease;
+}
+
+html[data-theme="dark"] .theme-switch-thumb {
+    transform: translateX(32px);
+    background: linear-gradient(135deg, #6c7bff, #4756c9);
+    box-shadow: 0 4px 10px rgba(76,90,220,.5);
+}
+
+html:not([data-theme="dark"]) .theme-switch-icon.sun { color: var(--amber); }
+html[data-theme="dark"] .theme-switch-icon.moon { color: #c2c9ff; }
+
+/* =========================================================
+   MODALS
+   ========================================================= */
+
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(20, 30, 70, 0.45);
+    backdrop-filter: blur(3px);
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+}
+
+.modal-overlay.open {
+    display: flex;
+    animation: overlayFade .2s ease both;
+}
+
+@keyframes overlayFade { from { opacity: 0; } to { opacity: 1; } }
+
+.modal-box {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    padding: 28px;
+    width: 500px;
+    max-width: 92%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 30px 60px rgba(20,30,80,.35);
+    animation: popIn .3s cubic-bezier(.2,.9,.3,1.2) both;
+}
+
+.modal-box h3 {
+    color: var(--ink);
+    margin-bottom: 14px;
+    font-size: 17px;
+    font-weight: 700;
+}
+
+.modal-close {
+    float: right;
+    cursor: pointer;
+    font-size: 20px;
+    color: var(--muted);
+    line-height: 1;
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .15s ease, color .15s ease;
+}
+.modal-close:hover { background: var(--blue-50); color: var(--red); }
+
+/* Compact variant for short confirm-style dialogs (vs. the wider
+   500px modal-box used for content like the respondents list).
+   (Restored — this is the Cancel / Deactivate confirm popup styling.) */
+.modal-box.modal-sm {
+    width: 380px;
+    padding: 26px;
+}
+
+.modal-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 14px;
+}
+.modal-icon svg { width: 22px; height: 22px; }
+.modal-icon.danger { background: #fdecef; color: var(--red); }
+.modal-icon.success { background: #e7faf1; color: #0f9d63; }
+
+.modal-box p.modal-message {
+    color: var(--muted);
+    font-size: 13.5px;
+    line-height: 1.55;
+    margin-bottom: 22px;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+.modal-actions button, .modal-actions .btn { margin-top: 0; }
+
+/* =========================================================
+   MISC
+   ========================================================= */
+
+::-webkit-scrollbar { width: 9px; height: 9px; }
+::-webkit-scrollbar-thumb { background: var(--blue-100); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: var(--blue-400); }
+
+@media print {
+    .navbar, .sidebar, .no-print { display: none !important; }
+    body:has(.sidebar) { padding-left: 0 !important; }
+}
+
+@media (max-width: 640px) {
+    .navbar { flex-direction: column; gap: 12px; align-items: flex-start; border-radius: 0 0 18px 18px; }
+    .container { padding: 0 14px 30px; }
+    .card { padding: 20px; }
+}
+
+/* =========================================================
+   PROFILE PAGE — Profile Details + Change Password side by side,
+   with inputs that stop growing past a comfortable reading width
+   instead of stretching edge-to-edge inside each card.
+   ========================================================= */
+
+.profile-grid {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+}
+
+.profile-grid .card {
+    flex: 1 1 0;
+    min-width: 0; /* allow flex children to shrink below content size */
+}
+
+.profile-grid input,
+.profile-grid select,
+.profile-grid textarea {
+    width: 100%;
+    max-width: 700px;
+}
+
+@media (max-width: 860px) {
+    .profile-grid {
+        flex-direction: column;
+    }
+    .profile-grid input,
+    .profile-grid select,
+    .profile-grid textarea {
+        max-width: none;
+    }
+}
+
+
+/* =========================================================
+   REGISTER NEW RESIDENT FORM
+   Two fields per row to keep the registration card compact.
+   ========================================================= */
+.register-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 18px;
+    row-gap: 0;
+}
+
+.register-field {
+    min-width: 0;
+}
+
+.register-field label {
+    margin-top: 14px;
+}
+
+.register-form > button {
+    margin-top: 20px;
+}
+
+@media (max-width: 700px) {
+    .register-form-grid {
+        grid-template-columns: 1fr;
+    }
+}
