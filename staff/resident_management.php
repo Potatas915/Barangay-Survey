@@ -624,6 +624,12 @@ include __DIR__ . "/../includes/staff_topbar.php";
                                     Edit
                                 </a>
 
+                                <a
+    class="btn"
+    href="resident_reset_password.php?resident_id=<?= (int) $r["resident_id"] ?>"
+>
+    Reset Password
+</a>
 
                                 <!--
                                 --------------------------------------------------
