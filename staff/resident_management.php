@@ -2,54 +2,318 @@
 require_once __DIR__ . "/../includes/functions.php";
 require_staff_login();
 
-$search = isset($_GET["search"]) ? trim($_GET["search"]) : "";
+$search = isset($_GET["search"])
+    ? trim($_GET["search"])
+    : "";
 
 if ($search !== "") {
+
     $like = "%" . $search . "%";
-    $stmt = $conn->prepare("SELECT resident_id, resident_number, first_name, last_name, email, contact_number FROM residents WHERE resident_number LIKE ? OR first_name LIKE ? OR last_name LIKE ? ORDER BY last_name");
-    $stmt->bind_param("sss", $like, $like, $like);
+
+    $stmt = $conn->prepare("
+        SELECT
+            resident_id,
+            resident_number,
+            first_name,
+            middle_name,
+            last_name,
+            extension_name,
+            civil_status,
+            birthday,
+            age,
+            occupation,
+            employer,
+            employer_address,
+            email,
+            contact_number,
+            address
+        FROM residents
+        WHERE
+            resident_number LIKE ?
+            OR first_name LIKE ?
+            OR middle_name LIKE ?
+            OR last_name LIKE ?
+            OR extension_name LIKE ?
+            OR email LIKE ?
+            OR contact_number LIKE ?
+        ORDER BY last_name, first_name
+    ");
+
+    $stmt->bind_param(
+        "sssssss",
+        $like,
+        $like,
+        $like,
+        $like,
+        $like,
+        $like,
+        $like
+    );
+
     $stmt->execute();
+
     $residents = $stmt->get_result();
+
 } else {
-    $residents = $conn->query("SELECT resident_id, resident_number, first_name, last_name, email, contact_number FROM residents ORDER BY last_name");
+
+    $residents = $conn->query("
+        SELECT
+            resident_id,
+            resident_number,
+            first_name,
+            middle_name,
+            last_name,
+            extension_name,
+            civil_status,
+            birthday,
+            age,
+            occupation,
+            employer,
+            employer_address,
+            email,
+            contact_number,
+            address
+        FROM residents
+        ORDER BY last_name, first_name
+    ");
+
 }
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
 <meta charset="UTF-8">
+
 <title>Resident Management</title>
-<link rel="stylesheet" href="../assets/css/style.css">
-<script>(function(){var t=localStorage.getItem("theme");if(t==="dark")document.documentElement.setAttribute("data-theme","dark");})();</script>
-<script>(function(){try{if(localStorage.getItem("sidebarCollapsed")==="true")document.documentElement.setAttribute("data-sidebar","collapsed");}catch(e){}})();</script>
+
+<link
+    rel="stylesheet"
+    href="../assets/css/style.css"
+>
+
+<script>
+(function(){
+    var t=localStorage.getItem("theme");
+    if(t==="dark")
+        document.documentElement.setAttribute("data-theme","dark");
+})();
+</script>
+
+<script>
+(function(){
+    try{
+        if(localStorage.getItem("sidebarCollapsed")==="true")
+            document.documentElement.setAttribute("data-sidebar","collapsed");
+    }catch(e){}
+})();
+</script>
+
 </head>
+
 <body>
+
 <?php include __DIR__ . "/../includes/staff_nav.php"; ?>
+
 <div class="container">
+
 <?php include __DIR__ . "/../includes/staff_topbar.php"; ?>
+
     <div class="card card-resident">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
+
+        <div
+            style="
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+                gap:16px;
+                flex-wrap:wrap;
+            "
+        >
+
             <h2>Registered Residents</h2>
-            <a class="btn" href="register.php">+ Register New Resident</a>
+
+            <a
+                class="btn"
+                href="register.php"
+            >
+                + Register New Resident
+            </a>
+
         </div>
-        <form method="GET" style="margin-bottom:16px;">
-            <input type="text" name="search" placeholder="Search by name or resident number" value="<?= e($search) ?>">
+
+
+        <form
+            method="GET"
+            style="margin-bottom:16px;"
+        >
+
+            <input
+                type="text"
+                name="search"
+                placeholder="Search by name, resident number, email, or contact"
+                value="<?= e($search) ?>"
+            >
+
         </form>
+
+
         <div class="table-scroll">
-        <table>
-            <tr><th>Resident Number</th><th>Name</th><th>Email</th><th>Contact</th></tr>
-            <?php while ($r = $residents->fetch_assoc()): ?>
-            <tr>
-                <td><?= e($r["resident_number"]) ?></td>
-                <td><?= e($r["first_name"] . " " . $r["last_name"]) ?></td>
-                <td><?= e($r["email"]) ?></td>
-                <td><?= e($r["contact_number"]) ?></td>
-            </tr>
-            <?php endwhile; ?>
-        </table>
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>Resident Number</th>
+
+                        <th>Name</th>
+
+                        <th>Civil Status</th>
+
+                        <th>Birthday</th>
+
+                        <th>Age</th>
+
+                        <th>Occupation</th>
+
+                        <th>Employer</th>
+
+                        <th>Email</th>
+
+                        <th>Contact</th>
+
+                        <th>Address</th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                <?php if ($residents && $residents->num_rows > 0): ?>
+
+                    <?php while ($r = $residents->fetch_assoc()): ?>
+
+                        <?php
+
+                        $full_name = trim(
+                            $r["first_name"] .
+                            " " .
+                            ($r["middle_name"] ?? "") .
+                            " " .
+                            $r["last_name"] .
+                            " " .
+                            ($r["extension_name"] ?? "")
+                        );
+
+                        ?>
+
+                        <tr>
+
+                            <td>
+                                <?= e($r["resident_number"]) ?>
+                            </td>
+
+
+                            <td>
+                                <?= e($full_name) ?>
+                            </td>
+
+
+                            <td>
+                                <?= e($r["civil_status"] ?? "") ?>
+                            </td>
+
+
+                            <td>
+                                <?= !empty($r["birthday"])
+                                    ? e(date("M d, Y", strtotime($r["birthday"])))
+                                    : "—"
+                                ?>
+                            </td>
+
+
+                            <td>
+                                <?= $r["age"] !== null && $r["age"] !== ""
+                                    ? e($r["age"])
+                                    : "—"
+                                ?>
+                            </td>
+
+
+                            <td>
+                                <?= !empty($r["occupation"])
+                                    ? e($r["occupation"])
+                                    : "—"
+                                ?>
+                            </td>
+
+
+                            <td>
+                                <?= !empty($r["employer"])
+                                    ? e($r["employer"])
+                                    : "—"
+                                ?>
+                            </td>
+
+
+                            <td>
+                                <?= !empty($r["email"])
+                                    ? e($r["email"])
+                                    : "—"
+                                ?>
+                            </td>
+
+
+                            <td>
+                                <?= !empty($r["contact_number"])
+                                    ? e($r["contact_number"])
+                                    : "—"
+                                ?>
+                            </td>
+
+
+                            <td>
+                                <?= !empty($r["address"])
+                                    ? e($r["address"])
+                                    : "—"
+                                ?>
+                            </td>
+
+                        </tr>
+
+                    <?php endwhile; ?>
+
+                <?php else: ?>
+
+                    <tr>
+
+                        <td
+                            colspan="10"
+                            style="text-align:center;"
+                        >
+                            No residents found.
+                        </td>
+
+                    </tr>
+
+                <?php endif; ?>
+
+                </tbody>
+
+            </table>
+
         </div>
+
     </div>
+
 </div>
+
 <script src="../assets/js/script.js"></script>
+
 </body>
 </html>
