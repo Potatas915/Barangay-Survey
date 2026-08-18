@@ -1,8 +1,9 @@
 <?php
+
 require_once __DIR__ . "/../includes/functions.php";
 require_resident_login();
 
-$resident_id = $_SESSION["resident_id"];
+$resident_id = (int) $_SESSION["resident_id"];
 
 $success = "";
 $error = "";
@@ -24,7 +25,7 @@ $allowed_civil_statuses = [
 
 /*
 |--------------------------------------------------------------------------
-| Helper functions
+| Helper Functions
 |--------------------------------------------------------------------------
 */
 
@@ -34,9 +35,15 @@ function calculate_age_from_birthday($birthday)
         return null;
     }
 
-    $birthday_date = DateTime::createFromFormat("Y-m-d", $birthday);
+    $birthday_date = DateTime::createFromFormat(
+        "Y-m-d",
+        $birthday
+    );
 
-    if (!$birthday_date || $birthday_date->format("Y-m-d") !== $birthday) {
+    if (
+        !$birthday_date ||
+        $birthday_date->format("Y-m-d") !== $birthday
+    ) {
         return null;
     }
 
@@ -48,7 +55,7 @@ function calculate_age_from_birthday($birthday)
 
 /*
 |--------------------------------------------------------------------------
-| Update complete resident profile
+| Update Complete Resident Profile
 |--------------------------------------------------------------------------
 */
 
@@ -57,18 +64,51 @@ if (
     isset($_POST["update_profile"])
 ) {
 
-    $middle_name = trim($_POST["middle_name"] ?? "");
-    $extension_name = trim($_POST["extension_name"] ?? "");
-    $civil_status = trim($_POST["civil_status"] ?? "");
-    $birthday = trim($_POST["birthday"] ?? "");
+    /*
+    |--------------------------------------------------------------------------
+    | Personal Information
+    |--------------------------------------------------------------------------
+    */
 
-    $occupation = trim($_POST["occupation"] ?? "");
-    $employer = trim($_POST["employer"] ?? "");
-    $employer_address = trim($_POST["employer_address"] ?? "");
+    $middle_name = trim(
+        $_POST["middle_name"] ?? ""
+    );
 
-    $email = trim($_POST["email"] ?? "");
-    $contact_number = trim($_POST["contact_number"] ?? "");
-    $address = trim($_POST["address"] ?? "");
+    $extension_name = trim(
+        $_POST["extension_name"] ?? ""
+    );
+
+    $civil_status = trim(
+        $_POST["civil_status"] ?? ""
+    );
+
+    $birthday = trim(
+        $_POST["birthday"] ?? ""
+    );
+
+    $occupation = trim(
+        $_POST["occupation"] ?? ""
+    );
+
+    $employer = trim(
+        $_POST["employer"] ?? ""
+    );
+
+    $employer_address = trim(
+        $_POST["employer_address"] ?? ""
+    );
+
+    $email = trim(
+        $_POST["email"] ?? ""
+    );
+
+    $contact_number = trim(
+        $_POST["contact_number"] ?? ""
+    );
+
+    $address = trim(
+        $_POST["address"] ?? ""
+    );
 
 
     /*
@@ -77,9 +117,17 @@ if (
     |--------------------------------------------------------------------------
     */
 
-    $spouse_name = trim($_POST["spouse_name"] ?? "");
-    $spouse_occupation = trim($_POST["spouse_occupation"] ?? "");
-    $spouse_employer = trim($_POST["spouse_employer"] ?? "");
+    $spouse_name = trim(
+        $_POST["spouse_name"] ?? ""
+    );
+
+    $spouse_occupation = trim(
+        $_POST["spouse_occupation"] ?? ""
+    );
+
+    $spouse_employer = trim(
+        $_POST["spouse_employer"] ?? ""
+    );
 
 
     /*
@@ -88,8 +136,13 @@ if (
     |--------------------------------------------------------------------------
     */
 
-    $father_name = trim($_POST["father_name"] ?? "");
-    $mother_name = trim($_POST["mother_name"] ?? "");
+    $father_name = trim(
+        $_POST["father_name"] ?? ""
+    );
+
+    $mother_name = trim(
+        $_POST["mother_name"] ?? ""
+    );
 
 
     /*
@@ -98,8 +151,17 @@ if (
     |--------------------------------------------------------------------------
     */
 
-    $children_names = $_POST["child_name"] ?? [];
-    $children_ages = $_POST["child_age"] ?? [];
+    $children_names =
+        isset($_POST["child_name"]) &&
+        is_array($_POST["child_name"])
+            ? $_POST["child_name"]
+            : [];
+
+    $children_ages =
+        isset($_POST["child_age"]) &&
+        is_array($_POST["child_age"])
+            ? $_POST["child_age"]
+            : [];
 
 
     /*
@@ -108,36 +170,22 @@ if (
     |--------------------------------------------------------------------------
     */
 
-    $reference_names = $_POST["reference_name"] ?? [];
+    $reference_names =
+        isset($_POST["reference_name"]) &&
+        is_array($_POST["reference_name"])
+            ? $_POST["reference_name"]
+            : [];
 
 
     /*
     |--------------------------------------------------------------------------
-    | Basic validation
-    |--------------------------------------------------------------------------
-    */
-
-    if (
-        $first_name ?? "" === "" ||
-        $last_name ?? "" === ""
-    ) {
-        /*
-         * First and last names are stored as non-editable fields,
-         * so this should normally never occur.
-         */
-        $error = "Resident name information is incomplete.";
-    }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Birthday validation and automatic age calculation
+    | Birthday Validation
     |--------------------------------------------------------------------------
     */
 
     $age = null;
 
-    if ($error === "" && $birthday !== "") {
+    if ($birthday !== "") {
 
         $birthday_date = DateTime::createFromFormat(
             "Y-m-d",
@@ -149,21 +197,24 @@ if (
             $birthday_date->format("Y-m-d") !== $birthday
         ) {
 
-            $error = "Please enter a valid birthday.";
+            $error =
+                "Please enter a valid birthday.";
 
         }
         elseif (
             $birthday_date > new DateTime("today")
         ) {
 
-            $error = "Birthday cannot be in the future.";
+            $error =
+                "Birthday cannot be in the future.";
 
         }
         else {
 
-            $age = calculate_age_from_birthday(
-                $birthday
-            );
+            $age =
+                calculate_age_from_birthday(
+                    $birthday
+                );
 
         }
     }
@@ -171,7 +222,7 @@ if (
 
     /*
     |--------------------------------------------------------------------------
-    | Civil status validation
+    | Civil Status Validation
     |--------------------------------------------------------------------------
     */
 
@@ -185,48 +236,57 @@ if (
         )
     ) {
 
-        $error = "Please select a valid civil status.";
+        $error =
+            "Please select a valid civil status.";
 
     }
 
 
     /*
     |--------------------------------------------------------------------------
-    | Email validation
+    | Email Validation
     |--------------------------------------------------------------------------
     */
 
     if (
         $error === "" &&
         $email !== "" &&
-        !filter_var($email, FILTER_VALIDATE_EMAIL)
+        !filter_var(
+            $email,
+            FILTER_VALIDATE_EMAIL
+        )
     ) {
 
-        $error = "Please enter a valid email address.";
+        $error =
+            "Please enter a valid email address.";
 
     }
 
 
     /*
     |--------------------------------------------------------------------------
-    | Contact number validation
+    | Contact Number Validation
     |--------------------------------------------------------------------------
     */
 
     if (
         $error === "" &&
         $contact_number !== "" &&
-        !preg_match('/^[0-9+\-\s()]{7,20}$/', $contact_number)
+        !preg_match(
+            '/^[0-9+\-\s()]{7,20}$/',
+            $contact_number
+        )
     ) {
 
-        $error = "Please enter a valid contact number.";
+        $error =
+            "Please enter a valid contact number.";
 
     }
 
 
     /*
     |--------------------------------------------------------------------------
-    | Children validation
+    | Children Validation
     |--------------------------------------------------------------------------
     */
 
@@ -239,31 +299,43 @@ if (
             count($children_ages)
         );
 
-        for ($i = 0; $i < $children_count; $i++) {
+        for (
+            $i = 0;
+            $i < $children_count;
+            $i++
+        ) {
 
             $child_name = trim(
                 $children_names[$i] ?? ""
             );
 
             $child_age_raw = trim(
-                $children_ages[$i] ?? ""
+                (string) (
+                    $children_ages[$i] ?? ""
+                )
             );
 
 
             /*
-             * Completely empty rows are ignored.
-             */
+            |--------------------------------------------------------------------------
+            | Ignore completely empty rows
+            |--------------------------------------------------------------------------
+            */
+
             if (
                 $child_name === "" &&
                 $child_age_raw === ""
             ) {
+
                 continue;
+
             }
 
 
             if ($child_name === "") {
 
-                $error = "Please provide a name for every child.";
+                $error =
+                    "Please provide a name for every child.";
 
                 break;
 
@@ -276,17 +348,19 @@ if (
 
                 if (
                     !ctype_digit($child_age_raw) ||
-                    (int)$child_age_raw < 0 ||
-                    (int)$child_age_raw > 150
+                    (int) $child_age_raw < 0 ||
+                    (int) $child_age_raw > 150
                 ) {
 
-                    $error = "Please enter a valid age for every child.";
+                    $error =
+                        "Please enter a valid age for every child.";
 
                     break;
 
                 }
 
-                $child_age = (int)$child_age_raw;
+                $child_age =
+                    (int) $child_age_raw;
             }
 
 
@@ -300,8 +374,11 @@ if (
 
     /*
     |--------------------------------------------------------------------------
-    | Character reference validation
+    | Character Reference Validation
     |--------------------------------------------------------------------------
+    |
+    | The resident profile requires two character references.
+    |
     */
 
     $clean_references = [];
@@ -333,7 +410,7 @@ if (
 
     /*
     |--------------------------------------------------------------------------
-    | Save complete profile
+    | Save Complete Profile
     |--------------------------------------------------------------------------
     */
 
@@ -346,7 +423,56 @@ if (
 
             /*
             |--------------------------------------------------------------------------
-            | Update main resident information
+            | Get Existing Resident Data For History
+            |--------------------------------------------------------------------------
+            */
+
+            $old_stmt = $conn->prepare("
+                SELECT
+                    resident_number,
+                    first_name,
+                    middle_name,
+                    last_name,
+                    extension_name,
+                    civil_status,
+                    birthday,
+                    age,
+                    occupation,
+                    employer,
+                    employer_address,
+                    email,
+                    contact_number,
+                    address
+                FROM residents
+                WHERE resident_id = ?
+                LIMIT 1
+            ");
+
+            $old_stmt->bind_param(
+                "i",
+                $resident_id
+            );
+
+            $old_stmt->execute();
+
+            $old_resident =
+                $old_stmt
+                    ->get_result()
+                    ->fetch_assoc();
+
+
+            if (!$old_resident) {
+
+                throw new Exception(
+                    "Resident record was not found."
+                );
+
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Update Resident Personal Information
             |--------------------------------------------------------------------------
             */
 
@@ -394,7 +520,7 @@ if (
 
             /*
             |--------------------------------------------------------------------------
-            | Spouse information
+            | Spouse
             |--------------------------------------------------------------------------
             */
 
@@ -485,10 +611,6 @@ if (
             }
             else {
 
-                /*
-                 * If the resident removes all spouse information,
-                 * remove the existing spouse record.
-                 */
                 if ($existing_spouse) {
 
                     $spouse_delete = $conn->prepare("
@@ -628,9 +750,8 @@ if (
             | Children
             |--------------------------------------------------------------------------
             |
-            | Children are stored as separate rows.
-            | Replacing the resident's child list prevents duplicate
-            | records when the resident edits their profile.
+            | Replace the current children list for this resident.
+            | This prevents duplicate records when editing.
             |
             */
 
@@ -665,9 +786,13 @@ if (
                     VALUES (?, ?, ?)
                 ");
 
-                foreach ($clean_children as $child) {
+                foreach (
+                    $clean_children
+                    as $child
+                ) {
 
-                    $child_age = $child["age"];
+                    $child_age =
+                        $child["age"];
 
                     $child_insert->bind_param(
                         "isi",
@@ -689,13 +814,46 @@ if (
 
             /*
             |--------------------------------------------------------------------------
-            | Character references
+            | Character References
             |--------------------------------------------------------------------------
             |
-            | The assignment requires two character references.
-            | Signature is optional.
+            | Existing signatures are intentionally preserved.
+            | Only the reference names are updated by this form.
             |
             */
+
+            $existing_reference_signatures = [];
+
+            $signature_stmt = $conn->prepare("
+                SELECT
+                    reference_order,
+                    signature
+                FROM resident_references
+                WHERE resident_id = ?
+                ORDER BY reference_order ASC
+            ");
+
+            $signature_stmt->bind_param(
+                "i",
+                $resident_id
+            );
+
+            $signature_stmt->execute();
+
+            $signature_result =
+                $signature_stmt->get_result();
+
+            while (
+                $signature_row =
+                    $signature_result->fetch_assoc()
+            ) {
+
+                $existing_reference_signatures[
+                    (int) $signature_row["reference_order"]
+                ] =
+                    $signature_row["signature"];
+            }
+
 
             $delete_references = $conn->prepare("
                 DELETE FROM resident_references
@@ -724,16 +882,28 @@ if (
                     signature,
                     reference_order
                 )
-                VALUES (?, ?, NULL, ?)
+                VALUES (?, ?, ?, ?)
             ");
 
-            foreach ($clean_references as $reference) {
+            foreach (
+                $clean_references
+                as $reference
+            ) {
+
+                $reference_order =
+                    $reference["order"];
+
+                $signature =
+                    $existing_reference_signatures[
+                        $reference_order
+                    ] ?? null;
 
                 $reference_insert->bind_param(
-                    "isi",
+                    "issi",
                     $resident_id,
                     $reference["name"],
-                    $reference["order"]
+                    $signature,
+                    $reference_order
                 );
 
                 if (!$reference_insert->execute()) {
@@ -748,13 +918,11 @@ if (
 
             /*
             |--------------------------------------------------------------------------
-            | Update history
+            | Record Update History
             |--------------------------------------------------------------------------
             */
 
-            $history_section = "complete_profile";
-            $history_old = "Resident complete profile updated.";
-            $history_new = json_encode([
+            $new_data = [
                 "personal_information" => [
                     "middle_name" => $middle_name,
                     "extension_name" => $extension_name,
@@ -768,22 +936,50 @@ if (
                     "contact_number" => $contact_number,
                     "address" => $address
                 ],
+
                 "spouse" => [
                     "name" => $spouse_name,
                     "occupation" => $spouse_occupation,
                     "employer" => $spouse_employer
                 ],
+
                 "parents" => [
                     "father_name" => $father_name,
                     "mother_name" => $mother_name
                 ],
-                "children_count" => count($clean_children),
-                "references_count" => count($clean_references)
-            ]);
+
+                "children" => $clean_children,
+
+                "references" => $clean_references
+            ];
 
 
-            $history_type = "resident";
-            $history_user_id = $resident_id;
+            $old_data = [
+                "personal_information" => $old_resident
+            ];
+
+
+            $history_section =
+                "complete_profile";
+
+            $history_old =
+                json_encode(
+                    $old_data,
+                    JSON_UNESCAPED_UNICODE
+                );
+
+            $history_new =
+                json_encode(
+                    $new_data,
+                    JSON_UNESCAPED_UNICODE
+                );
+
+            $history_type =
+                "resident";
+
+            $history_user_id =
+                $resident_id;
+
 
             $history_stmt = $conn->prepare("
                 INSERT INTO resident_update_history
@@ -817,6 +1013,12 @@ if (
             }
 
 
+            /*
+            |--------------------------------------------------------------------------
+            | Commit
+            |--------------------------------------------------------------------------
+            */
+
             $conn->commit();
 
             $success =
@@ -825,11 +1027,20 @@ if (
         }
         catch (Throwable $exception) {
 
-            $conn->rollback();
+            if (
+                $conn->errno === 0 ||
+                true
+            ) {
+                try {
+                    $conn->rollback();
+                }
+                catch (Throwable $rollback_exception) {
+                    // Ignore rollback failure.
+                }
+            }
 
             $error =
                 "Unable to update your complete profile. Please try again.";
-
         }
     }
 }
@@ -837,7 +1048,7 @@ if (
 
 /*
 |--------------------------------------------------------------------------
-| Upload passport-size photo
+| Upload / Update Resident Photo
 |--------------------------------------------------------------------------
 */
 
@@ -865,11 +1076,16 @@ if (
     }
     else {
 
-        $photo = $_FILES["photo"];
+        $photo =
+            $_FILES["photo"];
 
-        $max_file_size = 5 * 1024 * 1024;
+        $max_file_size =
+            5 * 1024 * 1024;
 
-        if ($photo["size"] > $max_file_size) {
+
+        if (
+            $photo["size"] > $max_file_size
+        ) {
 
             $photo_error =
                 "Photo must not exceed 5 MB.";
@@ -877,9 +1093,11 @@ if (
         }
         else {
 
-            $image_info = @getimagesize(
-                $photo["tmp_name"]
-            );
+            $image_info =
+                @getimagesize(
+                    $photo["tmp_name"]
+                );
+
 
             if ($image_info === false) {
 
@@ -895,8 +1113,10 @@ if (
                     IMAGETYPE_WEBP => "webp"
                 ];
 
+
                 $image_type =
                     $image_info[2];
+
 
                 if (
                     !isset(
@@ -913,11 +1133,16 @@ if (
                     $extension =
                         $allowed_types[$image_type];
 
+
                     $upload_directory =
-                        __DIR__ . "/../uploads/residents";
+                        __DIR__ .
+                        "/../uploads/residents";
+
 
                     if (
-                        !is_dir($upload_directory) &&
+                        !is_dir(
+                            $upload_directory
+                        ) &&
                         !mkdir(
                             $upload_directory,
                             0755,
@@ -941,6 +1166,7 @@ if (
                             "." .
                             $extension;
 
+
                         $destination =
                             $upload_directory .
                             "/" .
@@ -959,24 +1185,38 @@ if (
                                 $file_name;
 
 
-                            $photo_stmt = $conn->prepare("
-                                SELECT photo
-                                FROM residents
-                                WHERE resident_id = ?
-                            ");
+                            /*
+                            |--------------------------------------------------------------------------
+                            | Get Existing Photo
+                            |--------------------------------------------------------------------------
+                            */
 
-                            $photo_stmt->bind_param(
+                            $old_photo_stmt =
+                                $conn->prepare("
+                                    SELECT photo
+                                    FROM residents
+                                    WHERE resident_id = ?
+                                    LIMIT 1
+                                ");
+
+                            $old_photo_stmt->bind_param(
                                 "i",
                                 $resident_id
                             );
 
-                            $photo_stmt->execute();
+                            $old_photo_stmt->execute();
 
                             $old_photo =
-                                $photo_stmt
+                                $old_photo_stmt
                                     ->get_result()
                                     ->fetch_assoc();
 
+
+                            /*
+                            |--------------------------------------------------------------------------
+                            | Save New Photo
+                            |--------------------------------------------------------------------------
+                            */
 
                             $update_photo =
                                 $conn->prepare("
@@ -997,11 +1237,15 @@ if (
                             ) {
 
                                 /*
-                                 * Remove old local photo after
-                                 * successfully saving the new one.
-                                 */
+                                |--------------------------------------------------------------------------
+                                | Delete Previous Photo
+                                |--------------------------------------------------------------------------
+                                */
+
                                 if (
-                                    !empty($old_photo["photo"])
+                                    !empty(
+                                        $old_photo["photo"]
+                                    )
                                 ) {
 
                                     $old_photo_file =
@@ -1012,6 +1256,7 @@ if (
                                             "/"
                                         );
 
+
                                     if (
                                         is_file(
                                             $old_photo_file
@@ -1021,7 +1266,6 @@ if (
                                         @unlink(
                                             $old_photo_file
                                         );
-
                                     }
                                 }
 
@@ -1058,7 +1302,7 @@ if (
 
 /*
 |--------------------------------------------------------------------------
-| Change password
+| Change Password
 |--------------------------------------------------------------------------
 */
 
@@ -1081,6 +1325,7 @@ if (
         SELECT password
         FROM residents
         WHERE resident_id = ?
+        LIMIT 1
     ");
 
     $stmt->bind_param(
@@ -1132,6 +1377,7 @@ if (
                 PASSWORD_DEFAULT
             );
 
+
         $update =
             $conn->prepare("
                 UPDATE residents
@@ -1144,6 +1390,7 @@ if (
             $hashed,
             $resident_id
         );
+
 
         if ($update->execute()) {
 
@@ -1163,7 +1410,7 @@ if (
 
 /*
 |--------------------------------------------------------------------------
-| Load resident profile
+| Load Resident
 |--------------------------------------------------------------------------
 */
 
@@ -1186,6 +1433,7 @@ $stmt = $conn->prepare("
         photo
     FROM residents
     WHERE resident_id = ?
+    LIMIT 1
 ");
 
 $stmt->bind_param(
@@ -1225,7 +1473,7 @@ if (!$resident) {
 
 /*
 |--------------------------------------------------------------------------
-| Load spouse
+| Load Spouse
 |--------------------------------------------------------------------------
 */
 
@@ -1234,6 +1482,7 @@ $spouse = [
     "occupation" => "",
     "employer" => ""
 ];
+
 
 $spouse_stmt = $conn->prepare("
     SELECT
@@ -1257,6 +1506,7 @@ $spouse_result =
         ->get_result()
         ->fetch_assoc();
 
+
 if ($spouse_result) {
     $spouse = $spouse_result;
 }
@@ -1264,7 +1514,7 @@ if ($spouse_result) {
 
 /*
 |--------------------------------------------------------------------------
-| Load parents
+| Load Parents
 |--------------------------------------------------------------------------
 */
 
@@ -1272,6 +1522,7 @@ $parents = [
     "father_name" => "",
     "mother_name" => ""
 ];
+
 
 $parents_stmt = $conn->prepare("
     SELECT
@@ -1294,6 +1545,7 @@ $parents_result =
         ->get_result()
         ->fetch_assoc();
 
+
 if ($parents_result) {
     $parents = $parents_result;
 }
@@ -1301,11 +1553,12 @@ if ($parents_result) {
 
 /*
 |--------------------------------------------------------------------------
-| Load children
+| Load Children
 |--------------------------------------------------------------------------
 */
 
 $children = [];
+
 
 $children_stmt = $conn->prepare("
     SELECT
@@ -1327,20 +1580,24 @@ $children_stmt->execute();
 $children_result =
     $children_stmt->get_result();
 
-while ($child = $children_result->fetch_assoc()) {
+
+while (
+    $child =
+    $children_result->fetch_assoc()
+) {
 
     $children[] = $child;
-
 }
 
 
 /*
 |--------------------------------------------------------------------------
-| Load references
+| Load Character References
 |--------------------------------------------------------------------------
 */
 
 $references = [];
+
 
 $references_stmt = $conn->prepare("
     SELECT
@@ -1363,27 +1620,41 @@ $references_stmt->execute();
 $references_result =
     $references_stmt->get_result();
 
+
 while (
     $reference =
     $references_result->fetch_assoc()
 ) {
 
     $references[] = $reference;
-
 }
 
 
-while (count($references) < 2) {
+/*
+|--------------------------------------------------------------------------
+| Always Display Two Reference Rows
+|--------------------------------------------------------------------------
+*/
+
+while (
+    count($references) < 2
+) {
 
     $references[] = [
         "reference_id" => null,
         "reference_name" => "",
         "signature" => "",
-        "reference_order" => count($references) + 1
+        "reference_order" =>
+            count($references) + 1
     ];
-
 }
 
+
+/*
+|--------------------------------------------------------------------------
+| Full Resident Name
+|--------------------------------------------------------------------------
+*/
 
 $full_name = trim(
     $resident["first_name"] .
@@ -1416,20 +1687,28 @@ $full_name = trim(
 >
 
 <script>
-(function(){
-    var t = localStorage.getItem("theme");
 
-    if (t === "dark") {
+(function () {
+
+    const theme =
+        localStorage.getItem("theme");
+
+    if (theme === "dark") {
+
         document.documentElement.setAttribute(
             "data-theme",
             "dark"
         );
     }
+
 })();
+
 </script>
 
 <script>
-(function(){
+
+(function () {
+
     try {
 
         if (
@@ -1442,11 +1721,13 @@ $full_name = trim(
                 "data-sidebar",
                 "collapsed"
             );
-
         }
 
-    } catch(e) {}
+    }
+    catch (error) {}
+
 })();
+
 </script>
 
 
@@ -1459,7 +1740,9 @@ $full_name = trim(
 .complete-profile {
 
     display: flex;
+
     flex-direction: column;
+
     gap: 24px;
 
 }
@@ -1475,7 +1758,9 @@ $full_name = trim(
 .profile-section-header {
 
     display: flex;
+
     align-items: center;
+
     justify-content: space-between;
 
     gap: 16px;
@@ -1554,6 +1839,15 @@ $full_name = trim(
     min-height: 90px;
 
     resize: vertical;
+
+}
+
+
+.readonly-field {
+
+    background: #eeeeee !important;
+
+    cursor: not-allowed;
 
 }
 
@@ -1756,13 +2050,6 @@ $full_name = trim(
 }
 
 
-.print-only {
-
-    display: none;
-
-}
-
-
 @media (max-width: 800px) {
 
     .complete-profile-grid {
@@ -1771,11 +2058,13 @@ $full_name = trim(
 
     }
 
+
     .complete-profile-field.full {
 
         grid-column: auto;
 
     }
+
 
     .profile-photo-layout {
 
@@ -1847,13 +2136,6 @@ $full_name = trim(
     }
 
 
-    .print-only {
-
-        display: block;
-
-    }
-
-
     input,
     select,
     textarea {
@@ -1885,22 +2167,50 @@ $full_name = trim(
 
 <body>
 
-<?php include __DIR__ . "/../includes/resident_nav.php"; ?>
+<?php
+include __DIR__ . "/../includes/resident_nav.php";
+?>
 
 
 <div class="container">
 
-    <?php include __DIR__ . "/../includes/resident_topbar.php"; ?>
+<?php
+include __DIR__ . "/../includes/resident_topbar.php";
+?>
 
 
-    <div class="welcome-header screen-only">
+<div class="welcome-header screen-only">
+
+    <div>
+
+        <h1>My Complete Profile</h1>
+
+        <p>
+            View and update your complete resident information.
+        </p>
+
+    </div>
+
+</div>
+
+
+<div class="complete-profile">
+
+
+<!-- =========================================================
+     PERSONAL INFORMATION
+     ========================================================= -->
+
+<div class="card profile-section">
+
+    <div class="profile-section-header">
 
         <div>
 
-            <h1>My Complete Profile</h1>
+            <h2>Personal Information</h2>
 
-            <p>
-                View and update your complete resident information.
+            <p class="profile-section-description">
+                Update your complete personal information.
             </p>
 
         </div>
@@ -1908,759 +2218,827 @@ $full_name = trim(
     </div>
 
 
-    <div class="complete-profile">
+    <?php if ($success): ?>
+
+        <div class="success">
+            <?= e($success) ?>
+        </div>
+
+    <?php endif; ?>
 
 
-        <!-- =====================================================
-             PERSONAL INFORMATION
-             ===================================================== -->
+    <?php if ($error): ?>
 
-        <div class="card profile-section">
+        <div class="error">
+            <?= e($error) ?>
+        </div>
 
-            <div class="profile-section-header">
+    <?php endif; ?>
 
-                <div>
 
-                    <h2>Personal Information</h2>
+    <!--
+    |--------------------------------------------------------------------------
+    | ONE FORM FOR THE COMPLETE RESIDENT PROFILE
+    |--------------------------------------------------------------------------
+    -->
 
-                    <p class="profile-section-description">
-                        Your basic resident information and contact details.
-                    </p>
+    <form
+        method="POST"
+        id="completeProfileForm"
+    >
 
-                </div>
+        <input
+            type="hidden"
+            name="update_profile"
+            value="1"
+        >
+
+
+        <div class="complete-profile-grid">
+
+
+            <!-- Resident Number -->
+
+            <div class="complete-profile-field">
+
+                <label>
+                    Resident Number
+                </label>
+
+                <input
+                    type="text"
+                    class="readonly-field"
+                    value="<?= e(
+                        $resident["resident_number"]
+                    ) ?>"
+                    readonly
+                >
 
             </div>
 
 
-            <?php if ($success): ?>
+            <!-- Civil Status -->
 
-                <div class="success">
-                    <?= e($success) ?>
-                </div>
+            <div class="complete-profile-field">
 
-            <?php endif; ?>
+                <label>
+                    Civil Status
+                </label>
 
-
-            <?php if ($error): ?>
-
-                <div class="error">
-                    <?= e($error) ?>
-                </div>
-
-            <?php endif; ?>
-
-
-            <form
-                method="POST"
-                id="completeProfileForm"
-            >
-
-                <input
-                    type="hidden"
-                    name="update_profile"
-                    value="1"
+                <select
+                    name="civil_status"
+                    required
                 >
 
+                    <option value="">
+                        Select Civil Status
+                    </option>
 
-                <div class="complete-profile-grid">
+                    <?php foreach (
+                        $allowed_civil_statuses
+                        as $status
+                    ): ?>
+
+                        <option
+                            value="<?= e($status) ?>"
+                            <?= $resident["civil_status"] === $status
+                                ? "selected"
+                                : ""
+                            ?>
+                        >
+                            <?= e($status) ?>
+                        </option>
+
+                    <?php endforeach; ?>
+
+                </select>
+
+            </div>
 
 
-                    <div class="complete-profile-field">
+            <!-- Last Name -->
 
-                        <label>
-                            Resident Number
-                        </label>
+            <div class="complete-profile-field">
+
+                <label>
+                    Last Name
+                </label>
+
+                <input
+                    type="text"
+                    class="readonly-field"
+                    value="<?= e(
+                        $resident["last_name"]
+                    ) ?>"
+                    readonly
+                >
+
+            </div>
+
+
+            <!-- First Name -->
+
+            <div class="complete-profile-field">
+
+                <label>
+                    First Name
+                </label>
+
+                <input
+                    type="text"
+                    class="readonly-field"
+                    value="<?= e(
+                        $resident["first_name"]
+                    ) ?>"
+                    readonly
+                >
+
+            </div>
+
+
+            <!-- Middle Name -->
+
+            <div class="complete-profile-field">
+
+                <label>
+                    Middle Name
+                </label>
+
+                <input
+                    type="text"
+                    name="middle_name"
+                    value="<?= e(
+                        $resident["middle_name"]
+                    ) ?>"
+                    maxlength="100"
+                >
+
+            </div>
+
+
+            <!-- Extension Name -->
+
+            <div class="complete-profile-field">
+
+                <label>
+                    Extension Name
+                </label>
+
+                <input
+                    type="text"
+                    name="extension_name"
+                    placeholder="Jr., Sr., III"
+                    value="<?= e(
+                        $resident["extension_name"]
+                    ) ?>"
+                    maxlength="20"
+                >
+
+            </div>
+
+
+            <!-- Birthday -->
+
+            <div class="complete-profile-field">
+
+                <label>
+                    Birthday
+                </label>
+
+                <input
+                    type="date"
+                    name="birthday"
+                    id="birthday"
+                    max="<?= date("Y-m-d") ?>"
+                    value="<?= e(
+                        $resident["birthday"]
+                    ) ?>"
+                >
+
+            </div>
+
+
+            <!-- Age -->
+
+            <div class="complete-profile-field">
+
+                <label>
+                    Age
+                </label>
+
+                <input
+                    type="number"
+                    id="age"
+                    class="readonly-field"
+                    value="<?= e(
+                        $resident["age"]
+                    ) ?>"
+                    readonly
+                >
+
+                <small>
+                    Age is automatically calculated from your birthday.
+                </small>
+
+            </div>
+
+
+            <!-- Occupation -->
+
+            <div class="complete-profile-field">
+
+                <label>
+                    Occupation
+                </label>
+
+                <input
+                    type="text"
+                    name="occupation"
+                    value="<?= e(
+                        $resident["occupation"]
+                    ) ?>"
+                    maxlength="150"
+                >
+
+            </div>
+
+
+            <!-- Employer -->
+
+            <div class="complete-profile-field">
+
+                <label>
+                    Employer
+                </label>
+
+                <input
+                    type="text"
+                    name="employer"
+                    value="<?= e(
+                        $resident["employer"]
+                    ) ?>"
+                    maxlength="150"
+                >
+
+            </div>
+
+
+            <!-- Employer Address -->
+
+            <div class="complete-profile-field full">
+
+                <label>
+                    Employer Address
+                </label>
+
+                <input
+                    type="text"
+                    name="employer_address"
+                    value="<?= e(
+                        $resident["employer_address"]
+                    ) ?>"
+                    maxlength="255"
+                >
+
+            </div>
+
+
+            <!-- Email -->
+
+            <div class="complete-profile-field">
+
+                <label>
+                    Email
+                </label>
+
+                <input
+                    type="email"
+                    name="email"
+                    value="<?= e(
+                        $resident["email"]
+                    ) ?>"
+                    maxlength="150"
+                >
+
+            </div>
+
+
+            <!-- Contact Number -->
+
+            <div class="complete-profile-field">
+
+                <label>
+                    Contact Number
+                </label>
+
+                <input
+                    type="text"
+                    name="contact_number"
+                    value="<?= e(
+                        $resident["contact_number"]
+                    ) ?>"
+                    maxlength="20"
+                    pattern="[0-9+\-\s()]{7,20}"
+                >
+
+            </div>
+
+
+            <!-- Address -->
+
+            <div class="complete-profile-field full">
+
+                <label>
+                    Address
+                </label>
+
+                <textarea
+                    name="address"
+                    maxlength="255"
+                ><?= e(
+                    $resident["address"]
+                ) ?></textarea>
+
+            </div>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+
+<!-- =========================================================
+     SPOUSE
+     ========================================================= -->
+
+<div class="card profile-section">
+
+    <div class="profile-section-header">
+
+        <div>
+
+            <h2>Spouse Information</h2>
+
+            <p class="profile-section-description">
+                Update spouse information when applicable.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="complete-profile-grid">
+
+        <div class="complete-profile-field">
+
+            <label>
+                Spouse Name
+            </label>
+
+            <input
+                type="text"
+                name="spouse_name"
+                form="completeProfileForm"
+                value="<?= e(
+                    $spouse["spouse_name"]
+                ) ?>"
+                maxlength="150"
+            >
+
+        </div>
+
+
+        <div class="complete-profile-field">
+
+            <label>
+                Occupation
+            </label>
+
+            <input
+                type="text"
+                name="spouse_occupation"
+                form="completeProfileForm"
+                value="<?= e(
+                    $spouse["occupation"]
+                ) ?>"
+                maxlength="150"
+            >
+
+        </div>
+
+
+        <div class="complete-profile-field">
+
+            <label>
+                Employer
+            </label>
+
+            <input
+                type="text"
+                name="spouse_employer"
+                form="completeProfileForm"
+                value="<?= e(
+                    $spouse["employer"]
+                ) ?>"
+                maxlength="150"
+            >
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- =========================================================
+     CHILDREN
+     ========================================================= -->
+
+<div class="card profile-section">
+
+    <div class="profile-section-header">
+
+        <div>
+
+            <h2>Children</h2>
+
+            <p class="profile-section-description">
+                Add, edit, or remove children from your profile.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="children-table-wrapper">
+
+        <table
+            class="children-table"
+        >
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        Child Name
+                    </th>
+
+                    <th>
+                        Age
+                    </th>
+
+                    <th class="table-action-cell">
+                        Action
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody id="childrenTableBody">
+
+            <?php if (!empty($children)): ?>
+
+                <?php foreach (
+                    $children
+                    as $child
+                ): ?>
+
+                    <tr>
+
+                        <td>
+
+                            <input
+                                type="text"
+                                name="child_name[]"
+                                form="completeProfileForm"
+                                value="<?= e(
+                                    $child["child_name"]
+                                ) ?>"
+                                maxlength="150"
+                            >
+
+                        </td>
+
+
+                        <td>
+
+                            <input
+                                type="number"
+                                name="child_age[]"
+                                form="completeProfileForm"
+                                min="0"
+                                max="150"
+                                value="<?= e(
+                                    $child["age"]
+                                ) ?>"
+                            >
+
+                        </td>
+
+
+                        <td class="table-action-cell">
+
+                            <button
+                                type="button"
+                                class="remove-row-btn"
+                            >
+                                Remove
+                            </button>
+
+                        </td>
+
+                    </tr>
+
+                <?php endforeach; ?>
+
+            <?php else: ?>
+
+                <tr>
+
+                    <td>
 
                         <input
                             type="text"
-                            value="<?= e($resident["resident_number"]) ?>"
-                            readonly
+                            name="child_name[]"
+                            form="completeProfileForm"
+                            maxlength="150"
                         >
 
-                    </div>
+                    </td>
 
 
-                    <div class="complete-profile-field">
-
-                        <label>
-                            Civil Status
-                        </label>
-
-                        <select
-                            name="civil_status"
-                            required
-                        >
-
-                            <option value="">
-                                Select Civil Status
-                            </option>
-
-                            <?php foreach (
-                                $allowed_civil_statuses
-                                as $status
-                            ): ?>
-
-                                <option
-                                    value="<?= e($status) ?>"
-                                    <?= $resident["civil_status"] === $status
-                                        ? "selected"
-                                        : ""
-                                    ?>
-                                >
-                                    <?= e($status) ?>
-                                </option>
-
-                            <?php endforeach; ?>
-
-                        </select>
-
-                    </div>
-
-
-                    <div class="complete-profile-field">
-
-                        <label>
-                            Last Name
-                        </label>
-
-                        <input
-                            type="text"
-                            value="<?= e($resident["last_name"]) ?>"
-                            readonly
-                        >
-
-                    </div>
-
-
-                    <div class="complete-profile-field">
-
-                        <label>
-                            First Name
-                        </label>
-
-                        <input
-                            type="text"
-                            value="<?= e($resident["first_name"]) ?>"
-                            readonly
-                        >
-
-                    </div>
-
-
-                    <div class="complete-profile-field">
-
-                        <label>
-                            Middle Name
-                        </label>
-
-                        <input
-                            type="text"
-                            name="middle_name"
-                            value="<?= e($resident["middle_name"]) ?>"
-                        >
-
-                    </div>
-
-
-                    <div class="complete-profile-field">
-
-                        <label>
-                            Extension Name
-                        </label>
-
-                        <input
-                            type="text"
-                            name="extension_name"
-                            placeholder="Jr., Sr., III"
-                            value="<?= e($resident["extension_name"]) ?>"
-                        >
-
-                    </div>
-
-
-                    <div class="complete-profile-field">
-
-                        <label>
-                            Birthday
-                        </label>
-
-                        <input
-                            type="date"
-                            name="birthday"
-                            id="birthday"
-                            max="<?= date("Y-m-d") ?>"
-                            value="<?= e($resident["birthday"]) ?>"
-                        >
-
-                    </div>
-
-
-                    <div class="complete-profile-field">
-
-                        <label>
-                            Age
-                        </label>
+                    <td>
 
                         <input
                             type="number"
-                            name="age"
-                            id="age"
-                            value="<?= e($resident["age"]) ?>"
-                            readonly
+                            name="child_age[]"
+                            form="completeProfileForm"
+                            min="0"
+                            max="150"
                         >
 
-                    </div>
+                    </td>
 
 
-                    <div class="complete-profile-field">
+                    <td class="table-action-cell">
 
-                        <label>
-                            Occupation
-                        </label>
-
-                        <input
-                            type="text"
-                            name="occupation"
-                            value="<?= e($resident["occupation"]) ?>"
+                        <button
+                            type="button"
+                            class="remove-row-btn"
                         >
+                            Remove
+                        </button>
 
-                    </div>
+                    </td>
 
+                </tr>
 
-                    <div class="complete-profile-field">
+            <?php endif; ?>
 
-                        <label>
-                            Employer
-                        </label>
+            </tbody>
 
-                        <input
-                            type="text"
-                            name="employer"
-                            value="<?= e($resident["employer"]) ?>"
-                        >
+        </table>
 
-                    </div>
+    </div>
 
 
-                    <div class="complete-profile-field full">
+    <button
+        type="button"
+        class="btn add-row-btn"
+        id="addChildBtn"
+    >
+        + Add Child
+    </button>
 
-                        <label>
-                            Employer Address
-                        </label>
-
-                        <input
-                            type="text"
-                            name="employer_address"
-                            value="<?= e($resident["employer_address"]) ?>"
-                        >
-
-                    </div>
+</div>
 
 
-                    <div class="complete-profile-field">
 
-                        <label>
-                            Email
-                        </label>
+<!-- =========================================================
+     PARENTS
+     ========================================================= -->
 
-                        <input
-                            type="email"
-                            name="email"
-                            value="<?= e($resident["email"]) ?>"
-                        >
+<div class="card profile-section">
 
-                    </div>
+    <div class="profile-section-header">
 
+        <div>
 
-                    <div class="complete-profile-field">
+            <h2>Parents</h2>
 
-                        <label>
-                            Contact Number
-                        </label>
-
-                        <input
-                            type="text"
-                            name="contact_number"
-                            value="<?= e($resident["contact_number"]) ?>"
-                        >
-
-                    </div>
-
-
-                    <div class="complete-profile-field full">
-
-                        <label>
-                            Address
-                        </label>
-
-                        <textarea
-                            name="address"
-                        ><?= e($resident["address"]) ?></textarea>
-
-                    </div>
-
-                </div>
-
-            </form>
+            <p class="profile-section-description">
+                Update your father's and mother's information.
+            </p>
 
         </div>
 
+    </div>
 
 
-        <!-- =====================================================
-             SPOUSE INFORMATION
-             ===================================================== -->
+    <div class="complete-profile-grid">
 
-        <div class="card profile-section">
+        <div class="complete-profile-field">
 
-            <div class="profile-section-header">
+            <label>
+                Father's Name
+            </label>
 
-                <div>
-
-                    <h2>Spouse Information</h2>
-
-                    <p class="profile-section-description">
-                        Provide spouse information when applicable.
-                    </p>
-
-                </div>
-
-            </div>
-
-
-            <div
-                class="complete-profile-grid"
+            <input
+                type="text"
+                name="father_name"
                 form="completeProfileForm"
+                value="<?= e(
+                    $parents["father_name"]
+                ) ?>"
+                maxlength="150"
             >
 
-                <div class="complete-profile-field">
-
-                    <label>
-                        Spouse Name
-                    </label>
-
-                    <input
-                        type="text"
-                        name="spouse_name"
-                        form="completeProfileForm"
-                        value="<?= e($spouse["spouse_name"]) ?>"
-                    >
-
-                </div>
-
-
-                <div class="complete-profile-field">
-
-                    <label>
-                        Occupation
-                    </label>
-
-                    <input
-                        type="text"
-                        name="spouse_occupation"
-                        form="completeProfileForm"
-                        value="<?= e($spouse["occupation"]) ?>"
-                    >
-
-                </div>
-
-
-                <div class="complete-profile-field">
-
-                    <label>
-                        Employer
-                    </label>
-
-                    <input
-                        type="text"
-                        name="spouse_employer"
-                        form="completeProfileForm"
-                        value="<?= e($spouse["employer"]) ?>"
-                    >
-
-                </div>
-
-            </div>
-
         </div>
 
 
+        <div class="complete-profile-field">
 
-        <!-- =====================================================
-             CHILDREN
-             ===================================================== -->
+            <label>
+                Mother's Name
+            </label>
 
-        <div class="card profile-section">
-
-            <div class="profile-section-header">
-
-                <div>
-
-                    <h2>Children</h2>
-
-                    <p class="profile-section-description">
-                        Add each child and their age.
-                    </p>
-
-                </div>
-
-            </div>
-
-
-            <div class="children-table-wrapper">
-
-                <table
-                    class="children-table"
-                    id="childrenTable"
-                >
-
-                    <thead>
-
-                        <tr>
-
-                            <th>
-                                Child Name
-                            </th>
-
-                            <th>
-                                Age
-                            </th>
-
-                            <th class="table-action-cell">
-                                Action
-                            </th>
-
-                        </tr>
-
-                    </thead>
-
-
-                    <tbody id="childrenTableBody">
-
-                    <?php if (!empty($children)): ?>
-
-                        <?php foreach ($children as $child): ?>
-
-                            <tr>
-
-                                <td>
-
-                                    <input
-                                        type="text"
-                                        name="child_name[]"
-                                        form="completeProfileForm"
-                                        value="<?= e($child["child_name"]) ?>"
-                                    >
-
-                                </td>
-
-
-                                <td>
-
-                                    <input
-                                        type="number"
-                                        name="child_age[]"
-                                        form="completeProfileForm"
-                                        min="0"
-                                        max="150"
-                                        value="<?= e($child["age"]) ?>"
-                                    >
-
-                                </td>
-
-
-                                <td class="table-action-cell">
-
-                                    <button
-                                        type="button"
-                                        class="remove-row-btn"
-                                    >
-                                        Remove
-                                    </button>
-
-                                </td>
-
-                            </tr>
-
-                        <?php endforeach; ?>
-
-                    <?php else: ?>
-
-                        <tr>
-
-                            <td>
-
-                                <input
-                                    type="text"
-                                    name="child_name[]"
-                                    form="completeProfileForm"
-                                >
-
-                            </td>
-
-
-                            <td>
-
-                                <input
-                                    type="number"
-                                    name="child_age[]"
-                                    form="completeProfileForm"
-                                    min="0"
-                                    max="150"
-                                >
-
-                            </td>
-
-
-                            <td class="table-action-cell">
-
-                                <button
-                                    type="button"
-                                    class="remove-row-btn"
-                                >
-                                    Remove
-                                </button>
-
-                            </td>
-
-                        </tr>
-
-                    <?php endif; ?>
-
-                    </tbody>
-
-                </table>
-
-            </div>
-
-
-            <button
-                type="button"
-                class="btn add-row-btn"
-                id="addChildBtn"
+            <input
+                type="text"
+                name="mother_name"
+                form="completeProfileForm"
+                value="<?= e(
+                    $parents["mother_name"]
+                ) ?>"
+                maxlength="150"
             >
-                + Add Child
-            </button>
 
         </div>
 
+    </div>
+
+</div>
 
 
-        <!-- =====================================================
-             PARENTS
-             ===================================================== -->
 
-        <div class="card profile-section">
+<!-- =========================================================
+     CHARACTER REFERENCES
+     ========================================================= -->
 
-            <div class="profile-section-header">
+<div class="card profile-section">
 
-                <div>
+    <div class="profile-section-header">
 
-                    <h2>Parents</h2>
+        <div>
 
-                    <p class="profile-section-description">
-                        Provide your father's and mother's names.
-                    </p>
+            <h2>Character References</h2>
 
-                </div>
-
-            </div>
-
-
-            <div class="complete-profile-grid">
-
-                <div class="complete-profile-field">
-
-                    <label>
-                        Father's Name
-                    </label>
-
-                    <input
-                        type="text"
-                        name="father_name"
-                        form="completeProfileForm"
-                        value="<?= e($parents["father_name"]) ?>"
-                    >
-
-                </div>
-
-
-                <div class="complete-profile-field">
-
-                    <label>
-                        Mother's Name
-                    </label>
-
-                    <input
-                        type="text"
-                        name="mother_name"
-                        form="completeProfileForm"
-                        value="<?= e($parents["mother_name"]) ?>"
-                    >
-
-                </div>
-
-            </div>
+            <p class="profile-section-description">
+                Update your two character references.
+                Existing signatures are preserved.
+            </p>
 
         </div>
 
+    </div>
 
 
-        <!-- =====================================================
-             CHARACTER REFERENCES
-             ===================================================== -->
+    <div class="references-table-wrapper">
 
-        <div class="card profile-section">
+        <table class="references-table">
 
-            <div class="profile-section-header">
+            <thead>
 
-                <div>
+                <tr>
 
-                    <h2>Character References</h2>
+                    <th>
+                        Reference
+                    </th>
 
-                    <p class="profile-section-description">
-                        Two character references are required.
-                        Signature is optional.
-                    </p>
+                    <th>
+                        Character Reference Name
+                    </th>
 
-                </div>
+                    <th>
+                        Signature
+                    </th>
 
-            </div>
+                </tr>
 
-
-            <div class="references-table-wrapper">
-
-                <table
-                    class="references-table"
-                    id="referencesTable"
-                >
-
-                    <thead>
-
-                        <tr>
-
-                            <th>
-                                Reference
-                            </th>
-
-                            <th>
-                                Character Reference Name
-                            </th>
-
-                            <th>
-                                Signature
-                            </th>
-
-                        </tr>
-
-                    </thead>
+            </thead>
 
 
-                    <tbody>
+            <tbody>
 
-                    <?php for (
-                        $i = 0;
-                        $i < 2;
-                        $i++
-                    ): ?>
+            <?php for (
+                $i = 0;
+                $i < 2;
+                $i++
+            ): ?>
 
-                        <tr>
+                <tr>
 
-                            <td>
-                                Reference <?= $i + 1 ?>
-                            </td>
+                    <td>
+                        Reference <?= $i + 1 ?>
+                    </td>
 
-                            <td>
 
-                                <input
-                                    type="text"
-                                    name="reference_name[]"
-                                    form="completeProfileForm"
-                                    value="<?= e(
-                                        $references[$i]["reference_name"]
-                                    ) ?>"
-                                    required
-                                >
+                    <td>
 
-                            </td>
+                        <input
+                            type="text"
+                            name="reference_name[]"
+                            form="completeProfileForm"
+                            value="<?= e(
+                                $references[$i]["reference_name"]
+                            ) ?>"
+                            maxlength="150"
+                            required
+                        >
 
-                            <td>
+                    </td>
 
-                                <?php if (
-                                    !empty(
-                                        $references[$i]["signature"]
-                                    )
-                                ): ?>
 
-                                    <div
-                                        style="
-                                            margin-bottom:8px;
-                                            font-size:12px;
-                                        "
-                                    >
-                                        Signature uploaded.
-                                    </div>
+                    <td>
 
-                                <?php else: ?>
+                        <?php if (
+                            !empty(
+                                $references[$i]["signature"]
+                            )
+                        ): ?>
 
-                                    <span
-                                        style="
-                                            opacity:.6;
-                                            font-size:12px;
-                                        "
-                                    >
-                                        Optional
-                                    </span>
+                            <span>
+                                Signature uploaded
+                            </span>
 
-                                <?php endif; ?>
+                        <?php else: ?>
 
-                            </td>
+                            <span
+                                style="opacity:.6;"
+                            >
+                                Optional
+                            </span>
 
-                        </tr>
+                        <?php endif; ?>
 
-                    <?php endfor; ?>
+                    </td>
 
-                    </tbody>
+                </tr>
 
-                </table>
+            <?php endfor; ?>
 
-            </div>
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+
+
+<!-- =========================================================
+     PROFILE PHOTO
+     ========================================================= -->
+
+<div class="card profile-section photo-upload-card">
+
+    <div class="profile-section-header">
+
+        <div>
+
+            <h2>Passport-Size Photo</h2>
+
+            <p class="profile-section-description">
+                Upload or replace your resident profile photo.
+            </p>
 
         </div>
 
+    </div>
 
 
-        <!-- =====================================================
-             PHOTO
-             ===================================================== -->
-
-        <div class="card profile-section photo-upload-card">
-
-            <div class="profile-section-header">
-
-                <div>
-
-                    <h2>Passport-Size Photo</h2>
-
-                    <p class="profile-section-description">
-                        Upload a passport-size photo for your resident profile.
-                    </p>
-
-                </div>
-
-            </div>
+    <div class="profile-photo-layout">
 
 
-            <div class="profile-photo-layout">
+        <div>
 
+            <div class="profile-photo-preview">
 
-                <div>
+                <?php if (
+                    !empty(
+                        $resident["photo"]
+                    )
+                ): ?>
 
-                    <div class="profile-photo-preview">
-
-                        <?php if (!empty($resident["photo"])): ?>
-
-                            <img
+                    <img
     src="../<?= e(
         ltrim(
             $resident["photo"],
@@ -2670,127 +3048,38 @@ $full_name = trim(
     alt="Resident Profile Photo"
 >
 
-                        <?php else: ?>
+                <?php else: ?>
 
-                            <div class="profile-photo-placeholder">
-                                No Photo
-                            </div>
-
-                        <?php endif; ?>
-
+                    <div class="profile-photo-placeholder">
+                        No Photo
                     </div>
 
-                </div>
-
-
-                <div>
-
-                    <?php if ($photo_success): ?>
-
-                        <div class="success">
-                            <?= e($photo_success) ?>
-                        </div>
-
-                    <?php endif; ?>
-
-
-                    <?php if ($photo_error): ?>
-
-                        <div class="error">
-                            <?= e($photo_error) ?>
-                        </div>
-
-                    <?php endif; ?>
-
-
-                    <form
-                        method="POST"
-                        enctype="multipart/form-data"
-                        class="photo-upload-form"
-                    >
-
-                        <input
-                            type="hidden"
-                            name="upload_photo"
-                            value="1"
-                        >
-
-
-                        <div class="complete-profile-field">
-
-                            <label>
-                                Choose Photo
-                            </label>
-
-                            <input
-                                type="file"
-                                name="photo"
-                                accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
-                                required
-                            >
-
-                        </div>
-
-
-                        <div class="photo-upload-note">
-
-                            Maximum file size: 5 MB.
-                            Allowed formats: JPG, PNG, WEBP.
-
-                        </div>
-
-
-                        <button
-                            type="submit"
-                            class="btn"
-                        >
-                            Upload Photo
-                        </button>
-
-                    </form>
-
-                </div>
+                <?php endif; ?>
 
             </div>
 
         </div>
 
 
+        <div>
 
-        <!-- =====================================================
-             PASSWORD
-             ===================================================== -->
-
-        <div class="card profile-section password-card">
-
-            <div class="profile-section-header">
-
-                <div>
-
-                    <h2>Change Password</h2>
-
-                    <p class="profile-section-description">
-                        Keep your account secure by changing your password.
-                    </p>
-
-                </div>
-
-            </div>
-
-
-            <?php if ($password_success): ?>
+            <?php if ($photo_success): ?>
 
                 <div class="success">
-                    <?= e($password_success) ?>
+                    <?= e(
+                        $photo_success
+                    ) ?>
                 </div>
 
             <?php endif; ?>
 
 
-            <?php if ($password_error): ?>
+            <?php if ($photo_error): ?>
 
                 <div class="error">
-                    <?= e($password_error) ?>
+                    <?= e(
+                        $photo_error
+                    ) ?>
                 </div>
 
             <?php endif; ?>
@@ -2798,12 +3087,13 @@ $full_name = trim(
 
             <form
                 method="POST"
-                class="complete-profile-grid"
+                enctype="multipart/form-data"
+                class="photo-upload-form"
             >
 
                 <input
                     type="hidden"
-                    name="change_password"
+                    name="upload_photo"
                     value="1"
                 >
 
@@ -2811,134 +3101,215 @@ $full_name = trim(
                 <div class="complete-profile-field">
 
                     <label>
-                        Current Password
+                        Choose Photo
                     </label>
 
                     <input
-                        type="password"
-                        name="current_password"
+                        type="file"
+                        name="photo"
+                        accept="
+                            .jpg,
+                            .jpeg,
+                            .png,
+                            .webp,
+                            image/jpeg,
+                            image/png,
+                            image/webp
+                        "
                         required
                     >
 
                 </div>
 
 
-                <div class="complete-profile-field">
+                <div class="photo-upload-note">
 
-                    <label>
-                        New Password
-                    </label>
-
-                    <input
-                        type="password"
-                        name="new_password"
-                        minlength="6"
-                        required
-                    >
+                    Maximum file size: 5 MB.
+                    Allowed formats: JPG, PNG, WEBP.
 
                 </div>
 
 
-                <div class="complete-profile-field">
-
-                    <label>
-                        Confirm New Password
-                    </label>
-
-                    <input
-                        type="password"
-                        name="confirm_password"
-                        minlength="6"
-                        required
-                    >
-
-                </div>
-
-
-                <div
-                    class="complete-profile-field"
-                    style="
-                        justify-content:flex-end;
-                    "
+                <button
+                    type="submit"
+                    class="btn"
                 >
-
-                    <button
-                        type="submit"
-                        class="btn"
-                    >
-                        Update Password
-                    </button>
-
-                </div>
+                    Upload Photo
+                </button>
 
             </form>
 
         </div>
 
+    </div>
+
+</div>
 
 
-        <!-- =====================================================
-             ACTIONS
-             ===================================================== -->
 
-        <div class="card profile-section screen-only">
+<!-- =========================================================
+     SAVE / PRINT
+     ========================================================= -->
 
-            <div class="profile-actions">
+<div class="card profile-section screen-only">
 
-                <div class="profile-actions-left">
+    <div class="profile-actions">
 
-                    <button
-                        type="submit"
-                        form="completeProfileForm"
-                        class="btn"
-                        id="saveCompleteProfileBtn"
-                    >
-                        Save Complete Profile
-                    </button>
+        <div class="profile-actions-left">
 
-                </div>
-
-
-                <div class="profile-actions-right">
-
-                    <button
-                        type="button"
-                        class="btn btn-secondary"
-                        id="printProfileBtn"
-                    >
-                        Print Profile
-                    </button>
-
-                </div>
-
-            </div>
+            <button
+                type="submit"
+                form="completeProfileForm"
+                class="btn"
+                id="saveCompleteProfileBtn"
+            >
+                Save Complete Profile
+            </button>
 
         </div>
 
 
-        <!-- =====================================================
-             PRINT HEADER
-             ===================================================== -->
+        <div class="profile-actions-right">
 
-        <div class="print-only">
+            <button
+                type="button"
+                class="btn btn-secondary"
+                id="printProfileBtn"
+            >
+                Print Profile
+            </button>
 
-            <h1>
-                Resident Personal Information
-            </h1>
+        </div>
 
-            <p>
-                Resident Number:
-                <?= e($resident["resident_number"]) ?>
-            </p>
+    </div>
 
-            <p>
-                Name:
-                <?= e($full_name) ?>
+</div>
+
+
+
+<!-- =========================================================
+     PASSWORD
+     ========================================================= -->
+
+<div class="card profile-section password-card">
+
+    <div class="profile-section-header">
+
+        <div>
+
+            <h2>Change Password</h2>
+
+            <p class="profile-section-description">
+                Change your resident account password.
             </p>
 
         </div>
 
     </div>
+
+
+    <?php if ($password_success): ?>
+
+        <div class="success">
+            <?= e(
+                $password_success
+            ) ?>
+        </div>
+
+    <?php endif; ?>
+
+
+    <?php if ($password_error): ?>
+
+        <div class="error">
+            <?= e(
+                $password_error
+            ) ?>
+        </div>
+
+    <?php endif; ?>
+
+
+    <form
+        method="POST"
+        class="complete-profile-grid"
+    >
+
+        <input
+            type="hidden"
+            name="change_password"
+            value="1"
+        >
+
+
+        <div class="complete-profile-field">
+
+            <label>
+                Current Password
+            </label>
+
+            <input
+                type="password"
+                name="current_password"
+                required
+            >
+
+        </div>
+
+
+        <div class="complete-profile-field">
+
+            <label>
+                New Password
+            </label>
+
+            <input
+                type="password"
+                name="new_password"
+                minlength="6"
+                required
+            >
+
+        </div>
+
+
+        <div class="complete-profile-field">
+
+            <label>
+                Confirm New Password
+            </label>
+
+            <input
+                type="password"
+                name="confirm_password"
+                minlength="6"
+                required
+            >
+
+        </div>
+
+
+        <div
+            class="complete-profile-field"
+            style="justify-content:flex-end;"
+        >
+
+            <button
+                type="submit"
+                class="btn"
+            >
+                Update Password
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+
+</div>
 
 </div>
 
@@ -2950,7 +3321,7 @@ $full_name = trim(
 
 /*
 |--------------------------------------------------------------------------
-| Automatic age calculation
+| Resident Profile Editing
 |--------------------------------------------------------------------------
 */
 
@@ -2958,20 +3329,44 @@ document.addEventListener(
     "DOMContentLoaded",
     function () {
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | Automatic Age Calculation
+        |--------------------------------------------------------------------------
+        */
+
         const birthdayInput =
-            document.getElementById("birthday");
+            document.getElementById(
+                "birthday"
+            );
 
         const ageInput =
-            document.getElementById("age");
+            document.getElementById(
+                "age"
+            );
 
 
         function calculateAge() {
 
-            if (!birthdayInput.value) {
+            if (
+                !birthdayInput ||
+                !ageInput
+            ) {
+
+                return;
+
+            }
+
+
+            if (
+                !birthdayInput.value
+            ) {
 
                 ageInput.value = "";
 
                 return;
+
             }
 
 
@@ -3017,16 +3412,19 @@ document.addEventListener(
         }
 
 
-        birthdayInput.addEventListener(
-            "change",
-            calculateAge
-        );
+        if (birthdayInput) {
 
+            birthdayInput.addEventListener(
+                "change",
+                calculateAge
+            );
 
-        birthdayInput.addEventListener(
-            "input",
-            calculateAge
-        );
+            birthdayInput.addEventListener(
+                "input",
+                calculateAge
+            );
+
+        }
 
 
         calculateAge();
@@ -3034,7 +3432,7 @@ document.addEventListener(
 
         /*
         |--------------------------------------------------------------------------
-        | Add child
+        | Add Child Row
         |--------------------------------------------------------------------------
         */
 
@@ -3049,121 +3447,128 @@ document.addEventListener(
             );
 
 
-        addChildBtn.addEventListener(
-            "click",
-            function () {
-
-                const row =
-                    document.createElement("tr");
-
-
-                row.innerHTML = `
-
-                    <td>
-
-                        <input
-                            type="text"
-                            name="child_name[]"
-                            form="completeProfileForm"
-                        >
-
-                    </td>
-
-                    <td>
-
-                        <input
-                            type="number"
-                            name="child_age[]"
-                            form="completeProfileForm"
-                            min="0"
-                            max="150"
-                        >
-
-                    </td>
-
-                    <td class="table-action-cell">
-
-                        <button
-                            type="button"
-                            class="remove-row-btn"
-                        >
-                            Remove
-                        </button>
-
-                    </td>
-
-                `;
-
-
-                childrenBody.appendChild(
-                    row
-                );
-
-
-                attachRemoveButton(
-                    row.querySelector(
-                        ".remove-row-btn"
-                    )
-                );
-
-            }
-        );
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Remove child
-        |--------------------------------------------------------------------------
-        */
-
-        function attachRemoveButton(
-            button
+        if (
+            addChildBtn &&
+            childrenBody
         ) {
 
-            button.addEventListener(
+            addChildBtn.addEventListener(
                 "click",
                 function () {
 
                     const row =
-                        button.closest("tr");
-
-                    if (row) {
-
-                        row.remove();
-
-                    }
+                        document.createElement(
+                            "tr"
+                        );
 
 
-                    /*
-                     * Keep at least one empty
-                     * child row available.
-                     */
-                    if (
-                        childrenBody.children.length === 0
-                    ) {
+                    row.innerHTML = `
 
-                        addChildBtn.click();
+                        <td>
 
-                    }
+                            <input
+                                type="text"
+                                name="child_name[]"
+                                form="completeProfileForm"
+                                maxlength="150"
+                            >
+
+                        </td>
+
+                        <td>
+
+                            <input
+                                type="number"
+                                name="child_age[]"
+                                form="completeProfileForm"
+                                min="0"
+                                max="150"
+                            >
+
+                        </td>
+
+                        <td class="table-action-cell">
+
+                            <button
+                                type="button"
+                                class="remove-row-btn"
+                            >
+                                Remove
+                            </button>
+
+                        </td>
+
+                    `;
+
+
+                    childrenBody.appendChild(
+                        row
+                    );
+
+
+                    attachRemoveButton(
+                        row.querySelector(
+                            ".remove-row-btn"
+                        )
+                    );
 
                 }
             );
 
+
+            /*
+            |--------------------------------------------------------------------------
+            | Remove Child Row
+            |--------------------------------------------------------------------------
+            */
+
+            function attachRemoveButton(
+                button
+            ) {
+
+                if (!button) {
+
+                    return;
+
+                }
+
+
+                button.addEventListener(
+                    "click",
+                    function () {
+
+                        const row =
+                            button.closest(
+                                "tr"
+                            );
+
+
+                        if (row) {
+
+                            row.remove();
+
+                        }
+
+                    }
+                );
+
+            }
+
+
+            document
+                .querySelectorAll(
+                    ".remove-row-btn"
+                )
+                .forEach(
+                    attachRemoveButton
+                );
+
         }
-
-
-        document
-            .querySelectorAll(
-                ".remove-row-btn"
-            )
-            .forEach(
-                attachRemoveButton
-            );
 
 
         /*
         |--------------------------------------------------------------------------
-        | Print profile
+        | Print Profile
         |--------------------------------------------------------------------------
         */
 
@@ -3173,19 +3578,23 @@ document.addEventListener(
             );
 
 
-        printButton.addEventListener(
-            "click",
-            function () {
+        if (printButton) {
 
-                window.print();
+            printButton.addEventListener(
+                "click",
+                function () {
 
-            }
-        );
+                    window.print();
+
+                }
+            );
+
+        }
 
 
         /*
         |--------------------------------------------------------------------------
-        | Form validation
+        | Complete Profile Validation
         |--------------------------------------------------------------------------
         */
 
@@ -3195,61 +3604,144 @@ document.addEventListener(
             );
 
 
-        profileForm.addEventListener(
-            "submit",
-            function (event) {
+        if (profileForm) {
 
-                if (
-                    !profileForm.checkValidity()
-                ) {
-
-                    event.preventDefault();
-
-                    profileForm.reportValidity();
-
-                    return;
-
-                }
+            profileForm.addEventListener(
+                "submit",
+                function (event) {
 
 
-                const referenceInputs =
-                    document.querySelectorAll(
-                        'input[name="reference_name[]"]'
-                    );
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Native HTML Validation
+                    |--------------------------------------------------------------------------
+                    */
+
+                    if (
+                        !profileForm.checkValidity()
+                    ) {
+
+                        event.preventDefault();
+
+                        profileForm.reportValidity();
+
+                        return;
+
+                    }
 
 
-                let validReferences = 0;
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Validate Birthday
+                    |--------------------------------------------------------------------------
+                    */
 
+                    if (
+                        birthdayInput &&
+                        birthdayInput.value
+                    ) {
 
-                referenceInputs.forEach(
-                    function (input) {
+                        const birthday =
+                            new Date(
+                                birthdayInput.value +
+                                "T00:00:00"
+                            );
+
+                        const today =
+                            new Date();
+
+                        today.setHours(
+                            0,
+                            0,
+                            0,
+                            0
+                        );
+
 
                         if (
-                            input.value.trim() !== ""
+                            birthday > today
                         ) {
 
-                            validReferences++;
+                            event.preventDefault();
+
+                            alert(
+                                "Birthday cannot be in the future."
+                            );
+
+                            return;
 
                         }
 
                     }
-                );
 
 
-                if (
-                    validReferences < 2
-                ) {
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Validate Character References
+                    |--------------------------------------------------------------------------
+                    */
 
-                    event.preventDefault();
+                    const referenceInputs =
+                        document.querySelectorAll(
+                            'input[name="reference_name[]"]'
+                        );
 
-                    alert(
-                        "Please provide both character references."
+
+                    let referenceCount = 0;
+
+
+                    referenceInputs.forEach(
+                        function (input) {
+
+                            if (
+                                input.value.trim() !== ""
+                            ) {
+
+                                referenceCount++;
+
+                            }
+
+                        }
                     );
 
-                }
 
-            }
-        );
+                    if (
+                        referenceCount < 2
+                    ) {
+
+                        event.preventDefault();
+
+                        alert(
+                            "Please provide both character references."
+                        );
+
+                        return;
+
+                    }
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Confirm Save
+                    |--------------------------------------------------------------------------
+                    */
+
+                    const confirmed =
+                        confirm(
+                            "Save your complete resident profile?"
+                        );
+
+
+                    if (!confirmed) {
+
+                        event.preventDefault();
+
+                    }
+
+                }
+            );
+
+        }
 
     }
 );
