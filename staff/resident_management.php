@@ -7,6 +7,21 @@ $search = isset($_GET["search"])
     ? trim($_GET["search"])
     : "";
 
+$success = isset($_GET["success"])
+    ? trim($_GET["success"])
+    : "";
+
+$error = isset($_GET["error"])
+    ? trim($_GET["error"])
+    : "";
+
+
+/*
+|--------------------------------------------------------------------------
+| Search Residents
+|--------------------------------------------------------------------------
+*/
+
 if ($search !== "") {
 
     $like = "%" . $search . "%";
@@ -38,7 +53,9 @@ if ($search !== "") {
             OR extension_name LIKE ?
             OR email LIKE ?
             OR contact_number LIKE ?
-        ORDER BY last_name, first_name
+        ORDER BY
+            last_name,
+            first_name
     ");
 
     $stmt->bind_param(
@@ -77,10 +94,13 @@ if ($search !== "") {
             address,
             photo
         FROM residents
-        ORDER BY last_name, first_name
+        ORDER BY
+            last_name,
+            first_name
     ");
 
 }
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -96,10 +116,12 @@ if ($search !== "") {
 
 <title>Resident Management</title>
 
+
 <link
     rel="stylesheet"
     href="../assets/css/style.css?v=<?= filemtime(__DIR__ . "/../assets/css/style.css") ?>"
 >
+
 
 <script>
 
@@ -120,6 +142,7 @@ if ($search !== "") {
 })();
 
 </script>
+
 
 <script>
 
@@ -147,6 +170,7 @@ if ($search !== "") {
 
 </script>
 
+
 <style>
 
 .resident-management-header {
@@ -173,9 +197,49 @@ if ($search !== "") {
 
 .resident-action-column {
 
-    min-width: 90px;
+    min-width: 150px;
 
     text-align: center;
+
+}
+
+
+.resident-actions {
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    gap: 8px;
+
+    flex-wrap: wrap;
+
+}
+
+
+.resident-actions .btn {
+
+    margin-top: 0;
+
+}
+
+
+.delete-resident-form {
+
+    display: inline;
+
+    margin: 0;
+
+}
+
+
+.delete-resident-button {
+
+    margin-top: 0;
+
+    cursor: pointer;
 
 }
 
@@ -183,28 +247,6 @@ if ($search !== "") {
 .edit-resident-btn {
 
     white-space: nowrap;
-
-}
-
-
-.resident-photo-thumb {
-
-    width: 45px;
-
-    height: 55px;
-
-    object-fit: cover;
-
-    border: 2px solid #111;
-
-}
-
-
-.no-photo {
-
-    font-size: 12px;
-
-    opacity: 0.6;
 
 }
 
@@ -226,15 +268,21 @@ if ($search !== "") {
 
 <body>
 
+
 <?php
+
 include __DIR__ . "/../includes/staff_nav.php";
+
 ?>
 
 
 <div class="container">
 
+
 <?php
+
 include __DIR__ . "/../includes/staff_topbar.php";
+
 ?>
 
 
@@ -242,6 +290,7 @@ include __DIR__ . "/../includes/staff_topbar.php";
 
 
     <div class="resident-management-header">
+
 
         <h2>
             Registered Residents
@@ -255,7 +304,30 @@ include __DIR__ . "/../includes/staff_topbar.php";
             + Register New Resident
         </a>
 
+
     </div>
+
+
+    <?php if ($success !== ""): ?>
+
+        <div class="success">
+
+            <?= e($success) ?>
+
+        </div>
+
+    <?php endif; ?>
+
+
+    <?php if ($error !== ""): ?>
+
+        <div class="error">
+
+            <?= e($error) ?>
+
+        </div>
+
+    <?php endif; ?>
 
 
     <form
@@ -275,7 +347,9 @@ include __DIR__ . "/../includes/staff_topbar.php";
 
     <div class="table-scroll">
 
+
         <table>
+
 
             <thead>
 
@@ -322,7 +396,7 @@ include __DIR__ . "/../includes/staff_topbar.php";
                     </th>
 
                     <th class="resident-action-column">
-                        Action
+                        Actions
                     </th>
 
                 </tr>
@@ -332,14 +406,17 @@ include __DIR__ . "/../includes/staff_topbar.php";
 
             <tbody>
 
+
             <?php if (
                 $residents &&
                 $residents->num_rows > 0
             ): ?>
 
+
                 <?php while (
                     $r = $residents->fetch_assoc()
                 ): ?>
+
 
                     <?php
 
@@ -353,46 +430,56 @@ include __DIR__ . "/../includes/staff_topbar.php";
                         ($r["extension_name"] ?? "")
                     );
 
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Safe name for JavaScript confirmation
+                    |--------------------------------------------------------------------------
+                    */
+
+                    $delete_message =
+                        "Are you sure you want to permanently delete " .
+                        $full_name .
+                        "?\n\n" .
+                        "This will delete the resident and all associated " .
+                        "information, including spouse, children, parents, " .
+                        "character references, update history, and survey responses.\n\n" .
+                        "This action cannot be undone.";
+
                     ?>
 
 
                     <tr>
 
+
                         <td>
+
                             <?= e(
                                 $r["resident_number"]
                             ) ?>
+
                         </td>
 
 
                         <td>
+
                             <?= e(
                                 $full_name
                             ) ?>
-                        </td>
 
-
-                        <td>
-                            <?= e(
-                                $r["civil_status"] ?? ""
-                            ) ?>
                         </td>
 
 
                         <td>
 
-                            <?= !empty(
-                                $r["birthday"]
-                            )
-                                ? e(
-                                    date(
-                                        "M d, Y",
-                                        strtotime(
-                                            $r["birthday"]
-                                        )
-                                    )
+                            <?=
+                                !empty(
+                                    $r["civil_status"]
                                 )
-                                : "—"
+                                    ? e(
+                                        $r["civil_status"]
+                                    )
+                                    : "—"
                             ?>
 
                         </td>
@@ -400,7 +487,28 @@ include __DIR__ . "/../includes/staff_topbar.php";
 
                         <td>
 
-                            <?= $r["age"] !== null &&
+                            <?=
+                                !empty(
+                                    $r["birthday"]
+                                )
+                                    ? e(
+                                        date(
+                                            "M d, Y",
+                                            strtotime(
+                                                $r["birthday"]
+                                            )
+                                        )
+                                    )
+                                    : "—"
+                            ?>
+
+                        </td>
+
+
+                        <td>
+
+                            <?=
+                                $r["age"] !== null &&
                                 $r["age"] !== ""
                                     ? e(
                                         $r["age"]
@@ -413,13 +521,14 @@ include __DIR__ . "/../includes/staff_topbar.php";
 
                         <td>
 
-                            <?= !empty(
-                                $r["occupation"]
-                            )
-                                ? e(
+                            <?=
+                                !empty(
                                     $r["occupation"]
                                 )
-                                : "—"
+                                    ? e(
+                                        $r["occupation"]
+                                    )
+                                    : "—"
                             ?>
 
                         </td>
@@ -427,13 +536,14 @@ include __DIR__ . "/../includes/staff_topbar.php";
 
                         <td>
 
-                            <?= !empty(
-                                $r["employer"]
-                            )
-                                ? e(
+                            <?=
+                                !empty(
                                     $r["employer"]
                                 )
-                                : "—"
+                                    ? e(
+                                        $r["employer"]
+                                    )
+                                    : "—"
                             ?>
 
                         </td>
@@ -441,13 +551,14 @@ include __DIR__ . "/../includes/staff_topbar.php";
 
                         <td>
 
-                            <?= !empty(
-                                $r["email"]
-                            )
-                                ? e(
+                            <?=
+                                !empty(
                                     $r["email"]
                                 )
-                                : "—"
+                                    ? e(
+                                        $r["email"]
+                                    )
+                                    : "—"
                             ?>
 
                         </td>
@@ -455,13 +566,14 @@ include __DIR__ . "/../includes/staff_topbar.php";
 
                         <td>
 
-                            <?= !empty(
-                                $r["contact_number"]
-                            )
-                                ? e(
+                            <?=
+                                !empty(
                                     $r["contact_number"]
                                 )
-                                : "—"
+                                    ? e(
+                                        $r["contact_number"]
+                                    )
+                                    : "—"
                             ?>
 
                         </td>
@@ -469,34 +581,103 @@ include __DIR__ . "/../includes/staff_topbar.php";
 
                         <td>
 
-                            <?= !empty(
-                                $r["address"]
-                            )
-                                ? e(
+                            <?=
+                                !empty(
                                     $r["address"]
                                 )
-                                : "—"
+                                    ? e(
+                                        $r["address"]
+                                    )
+                                    : "—"
                             ?>
 
                         </td>
 
 
-                        <td class="resident-action-column">
+                        <td
+                            class="resident-action-column"
+                        >
 
-                            <a
-                                class="btn edit-resident-btn"
-                                href="resident_edit.php?resident_id=<?= (int) $r["resident_id"] ?>"
+
+                            <div
+                                class="resident-actions"
                             >
-                                Edit
-                            </a>
+
+
+                                <!--
+                                --------------------------------------------------
+                                EDIT
+                                --------------------------------------------------
+
+                                The existing resident_edit.php expects:
+
+                                ?resident_id=123
+
+                                Do not change this to ?id=123.
+                                -->
+
+
+                                <a
+                                    class="btn edit-resident-btn"
+                                    href="resident_edit.php?resident_id=<?= (int) $r["resident_id"] ?>"
+                                >
+                                    Edit
+                                </a>
+
+
+                                <!--
+                                --------------------------------------------------
+                                DELETE
+                                --------------------------------------------------
+
+                                Uses POST.
+                                The confirmation is the browser's native
+                                confirmation dialog.
+
+                                No modal or second UI is created.
+                                -->
+
+
+                                <form
+                                    method="POST"
+                                    action="resident_delete.php"
+                                    class="delete-resident-form"
+                                    onsubmit="return confirm(<?= json_encode($delete_message) ?>);"
+                                >
+
+
+                                    <input
+                                        type="hidden"
+                                        name="resident_id"
+                                        value="<?= (int) $r["resident_id"] ?>"
+                                    >
+
+
+                                    <button
+                                        type="submit"
+                                        class="btn btn-danger delete-resident-button"
+                                    >
+                                        Delete
+                                    </button>
+
+
+                                </form>
+
+
+                            </div>
+
 
                         </td>
+
 
                     </tr>
 
+
                 <?php endwhile; ?>
 
+
             <?php else: ?>
+
 
                 <tr>
 
@@ -504,25 +685,34 @@ include __DIR__ . "/../includes/staff_topbar.php";
                         colspan="11"
                         style="text-align:center;"
                     >
+
                         No residents found.
+
                     </td>
 
                 </tr>
 
+
             <?php endif; ?>
+
 
             </tbody>
 
+
         </table>
+
 
     </div>
 
+
 </div>
+
 
 </div>
 
 
 <script src="../assets/js/script.js"></script>
+
 
 </body>
 
