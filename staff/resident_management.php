@@ -3,9 +3,12 @@
 require_once __DIR__ . "/../includes/functions.php";
 require_staff_login();
 
-$search = isset($_GET["search"])
-    ? trim($_GET["search"])
-    : "";
+
+/*
+|--------------------------------------------------------------------------
+| Messages
+|--------------------------------------------------------------------------
+*/
 
 $success = isset($_GET["success"])
     ? trim($_GET["success"])
@@ -18,7 +21,18 @@ $error = isset($_GET["error"])
 
 /*
 |--------------------------------------------------------------------------
-| Search Residents
+| Search
+|--------------------------------------------------------------------------
+*/
+
+$search = isset($_GET["search"])
+    ? trim($_GET["search"])
+    : "";
+
+
+/*
+|--------------------------------------------------------------------------
+| Load Residents
 |--------------------------------------------------------------------------
 */
 
@@ -58,6 +72,16 @@ if ($search !== "") {
             first_name
     ");
 
+
+    if (!$stmt) {
+
+        die(
+            "Unable to prepare resident search."
+        );
+
+    }
+
+
     $stmt->bind_param(
         "sssssss",
         $like,
@@ -69,11 +93,14 @@ if ($search !== "") {
         $like
     );
 
+
     $stmt->execute();
 
-    $residents = $stmt->get_result();
+    $residents =
+        $stmt->get_result();
 
-} else {
+}
+else {
 
     $residents = $conn->query("
         SELECT
@@ -99,6 +126,15 @@ if ($search !== "") {
             first_name
     ");
 
+
+    if (!$residents) {
+
+        die(
+            "Unable to load residents."
+        );
+
+    }
+
 }
 
 ?>
@@ -114,7 +150,9 @@ if ($search !== "") {
     content="width=device-width, initial-scale=1.0"
 >
 
-<title>Resident Management</title>
+<title>
+    Resident Management
+</title>
 
 
 <link
@@ -127,10 +165,10 @@ if ($search !== "") {
 
 (function () {
 
-    var t =
+    var theme =
         localStorage.getItem("theme");
 
-    if (t === "dark") {
+    if (theme === "dark") {
 
         document.documentElement.setAttribute(
             "data-theme",
@@ -173,6 +211,12 @@ if ($search !== "") {
 
 <style>
 
+/*
+|--------------------------------------------------------------------------
+| Resident Management
+|--------------------------------------------------------------------------
+*/
+
 .resident-management-header {
 
     display: flex;
@@ -184,6 +228,35 @@ if ($search !== "") {
     gap: 16px;
 
     flex-wrap: wrap;
+
+    margin-bottom: 18px;
+
+}
+
+
+.resident-management-header h2 {
+
+    margin: 0;
+
+}
+
+
+.resident-management-actions {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    flex-wrap: wrap;
+
+}
+
+
+.resident-management-actions .btn {
+
+    margin-top: 0;
 
 }
 
@@ -251,11 +324,24 @@ if ($search !== "") {
 }
 
 
+.reset-password-btn {
+
+    white-space: nowrap;
+
+}
+
+
 @media (max-width: 900px) {
 
     .resident-management-header {
 
         align-items: flex-start;
+
+    }
+
+    .resident-management-actions {
+
+        width: 100%;
 
     }
 
@@ -297,12 +383,40 @@ include __DIR__ . "/../includes/staff_topbar.php";
         </h2>
 
 
-        <a
-            class="btn"
-            href="register.php"
+        <div
+            class="resident-management-actions"
         >
-            + Register New Resident
-        </a>
+
+
+            <!--
+            ----------------------------------------------------------
+            REGISTER NEW RESIDENT
+            ----------------------------------------------------------
+            -->
+
+            <a
+                class="btn"
+                href="register.php"
+            >
+                + Register New Resident
+            </a>
+
+
+            <!--
+            ----------------------------------------------------------
+            VIEW UPDATED RECORDS
+            ----------------------------------------------------------
+            -->
+
+            <a
+                class="btn"
+                href="resident_update_history.php"
+            >
+                View Updated Records
+            </a>
+
+
+        </div>
 
 
     </div>
@@ -414,7 +528,8 @@ include __DIR__ . "/../includes/staff_topbar.php";
 
 
                 <?php while (
-                    $r = $residents->fetch_assoc()
+                    $r =
+                    $residents->fetch_assoc()
                 ): ?>
 
 
@@ -431,9 +546,19 @@ include __DIR__ . "/../includes/staff_topbar.php";
                     );
 
 
+                    if (
+                        $full_name === ""
+                    ) {
+
+                        $full_name =
+                            $r["resident_number"];
+
+                    }
+
+
                     /*
                     |--------------------------------------------------------------------------
-                    | Safe name for JavaScript confirmation
+                    | Delete Confirmation
                     |--------------------------------------------------------------------------
                     */
 
@@ -608,14 +733,7 @@ include __DIR__ . "/../includes/staff_topbar.php";
                                 --------------------------------------------------
                                 EDIT
                                 --------------------------------------------------
-
-                                The existing resident_edit.php expects:
-
-                                ?resident_id=123
-
-                                Do not change this to ?id=123.
                                 -->
-
 
                                 <a
                                     class="btn edit-resident-btn"
@@ -624,25 +742,26 @@ include __DIR__ . "/../includes/staff_topbar.php";
                                     Edit
                                 </a>
 
+
+                                <!--
+                                --------------------------------------------------
+                                RESET PASSWORD
+                                --------------------------------------------------
+                                -->
+
                                 <a
-    class="btn"
-    href="resident_reset_password.php?resident_id=<?= (int) $r["resident_id"] ?>"
->
-    Reset Password
-</a>
+                                    class="btn reset-password-btn"
+                                    href="resident_reset_password.php?resident_id=<?= (int) $r["resident_id"] ?>"
+                                >
+                                    Reset Password
+                                </a>
+
 
                                 <!--
                                 --------------------------------------------------
                                 DELETE
                                 --------------------------------------------------
-
-                                Uses POST.
-                                The confirmation is the browser's native
-                                confirmation dialog.
-
-                                No modal or second UI is created.
                                 -->
-
 
                                 <form
                                     method="POST"
