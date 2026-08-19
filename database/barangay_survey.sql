@@ -1,6 +1,6 @@
 -- =========================================================
 -- BARANGAY HEALTH CENTER SURVEY MANAGEMENT SYSTEM
--- COMPLETE DATABASE + RESIDENT UPDATE HISTORY
+-- COMPLETE DATABASE
 --
 -- Includes:
 --   1. Original Barangay Survey database structure
@@ -11,6 +11,15 @@
 --   6. Before/After change storage
 --   7. Staff / Resident update tracking
 --   8. Resident archive status
+--   9. Surveys
+--  10. Survey questions
+--  11. Survey choices
+--  12. Survey responses
+--  13. Survey results
+--  14. Login history
+--  15. Sample staff account
+--  16. Five sample residents
+--  17. Sample survey and questions
 --
 -- IMPORT THIS FILE ONCE IN PHPMYADMIN
 -- =========================================================
@@ -138,20 +147,8 @@ CREATE TABLE IF NOT EXISTS resident_children (
 -- =========================================================
 -- TABLE: resident_update_history
 --
--- This is the important new table.
---
--- It stores:
---
---   old_data = BEFORE
---   new_data = AFTER
---
--- So the application can display:
---
---   BEFORE                  AFTER
---   --------------------   --------------------
---   Middle Name: Cruz       Middle Name: Santos
---   Occupation: Driver      Occupation: Engineer
---
+-- Stores BEFORE and AFTER information whenever a resident
+-- record is updated.
 -- =========================================================
 
 CREATE TABLE IF NOT EXISTS resident_update_history (
@@ -427,8 +424,6 @@ CREATE TABLE IF NOT EXISTS login_history (
 -- SAMPLE STAFF ACCOUNT
 -- =========================================================
 --
--- Only insert the sample account if it doesn't already exist.
---
 -- Username:
 --     admin
 --
@@ -462,18 +457,9 @@ WHERE NOT EXISTS (
 
 
 -- =========================================================
--- SAMPLE RESIDENTS
+-- SAMPLE RESIDENT 1
 -- =========================================================
---
--- These are inserted only when their resident number
--- does not already exist.
---
--- Gender is not assigned to these existing sample residents
--- because the original SQL does not specify their gender.
---
--- New residents registered through register.php will have
--- either Male or Female saved in the gender column.
---
+-- Gender: Male
 -- =========================================================
 
 INSERT INTO residents (
@@ -483,6 +469,7 @@ INSERT INTO residents (
     email,
     contact_number,
     address,
+    gender,
     password,
     is_first_login
 )
@@ -494,6 +481,7 @@ SELECT
     'lianjustin91@gmail.com',
     '09752509652',
     'Sulucan, Bocaue, Bulacan',
+    'Male',
     '$2b$10$mGrOfVoC0/ORly7Z4iHH0OPlksjcOmNqPP9hh4vkrXXPJnQfq4LMm',
     1
 
@@ -506,6 +494,12 @@ WHERE NOT EXISTS (
 );
 
 
+-- =========================================================
+-- SAMPLE RESIDENT 2
+-- =========================================================
+-- Gender: Female
+-- =========================================================
+
 INSERT INTO residents (
     resident_number,
     first_name,
@@ -513,6 +507,7 @@ INSERT INTO residents (
     email,
     contact_number,
     address,
+    gender,
     password,
     is_first_login
 )
@@ -524,6 +519,7 @@ SELECT
     'cieloestolloso09@gmail.com',
     '09763008362',
     'Iba-Ibayo, Hagonoy, Bulacan',
+    'Female',
     '$2b$10$Vd25nNypemf8GlUJX.pAsehs9fdQUS/7oZvtBEyU7dleDslVSinpe',
     1
 
@@ -536,6 +532,12 @@ WHERE NOT EXISTS (
 );
 
 
+-- =========================================================
+-- SAMPLE RESIDENT 3
+-- =========================================================
+-- Gender: Female
+-- =========================================================
+
 INSERT INTO residents (
     resident_number,
     first_name,
@@ -543,6 +545,7 @@ INSERT INTO residents (
     email,
     contact_number,
     address,
+    gender,
     password,
     is_first_login
 )
@@ -554,6 +557,7 @@ SELECT
     'pauleensalvador@gmail.com',
     '09690640080',
     'Malolos, Bulacan',
+    'Female',
     '$2b$10$wz1gKG5NezDiO9kCo3cMveQBx1ju78z7M4plgT349Uuazy9oa.Tr.',
     1
 
@@ -566,6 +570,12 @@ WHERE NOT EXISTS (
 );
 
 
+-- =========================================================
+-- SAMPLE RESIDENT 4
+-- =========================================================
+-- Gender: Female
+-- =========================================================
+
 INSERT INTO residents (
     resident_number,
     first_name,
@@ -573,6 +583,7 @@ INSERT INTO residents (
     email,
     contact_number,
     address,
+    gender,
     password,
     is_first_login
 )
@@ -584,6 +595,7 @@ SELECT
     'kyliedenise12@gmail.com',
     '09235476895',
     'San Isidro 1, Paombong, Bulacan',
+    'Female',
     '$2b$10$Va7OVF/mb56F6KFD99w5FegKMXJd3g51ohmsvz12JI2AJdqnhN0hu',
     1
 
@@ -596,6 +608,12 @@ WHERE NOT EXISTS (
 );
 
 
+-- =========================================================
+-- SAMPLE RESIDENT 5
+-- =========================================================
+-- Gender: Male
+-- =========================================================
+
 INSERT INTO residents (
     resident_number,
     first_name,
@@ -603,6 +621,7 @@ INSERT INTO residents (
     email,
     contact_number,
     address,
+    gender,
     password,
     is_first_login
 )
@@ -614,6 +633,7 @@ SELECT
     'aarongabrielranes@gmail.com',
     '09690924629',
     'Malis, Guiguinto, Bulacan',
+    'Male',
     '$2b$10$qPNa1js1imq7pYTuQF2AluEX3BwQRYr5BXeZfaAiJbzR55z8.vrw2',
     1
 
@@ -658,7 +678,7 @@ WHERE NOT EXISTS (
 
 
 -- =========================================================
--- SAMPLE SURVEY QUESTIONS
+-- SAMPLE SURVEY QUESTION 1
 -- =========================================================
 
 INSERT INTO survey_questions (
@@ -691,6 +711,10 @@ AND NOT EXISTS (
 );
 
 
+-- =========================================================
+-- SAMPLE SURVEY QUESTION 2
+-- =========================================================
+
 INSERT INTO survey_questions (
     survey_id,
     question_text,
@@ -721,6 +745,10 @@ AND NOT EXISTS (
 );
 
 
+-- =========================================================
+-- SAMPLE SURVEY QUESTION 3
+-- =========================================================
+
 INSERT INTO survey_questions (
     survey_id,
     question_text,
@@ -750,6 +778,10 @@ AND NOT EXISTS (
 
 );
 
+
+-- =========================================================
+-- SAMPLE SURVEY QUESTION 4
+-- =========================================================
 
 INSERT INTO survey_questions (
     survey_id,
@@ -783,6 +815,7 @@ AND NOT EXISTS (
 
 -- =========================================================
 -- SAMPLE SURVEY CHOICES
+-- QUESTION 1 - RATING
 -- =========================================================
 
 INSERT INTO survey_choices (
@@ -915,6 +948,11 @@ AND NOT EXISTS (
 );
 
 
+-- =========================================================
+-- SAMPLE SURVEY CHOICES
+-- QUESTION 2 - YES / NO
+-- =========================================================
+
 INSERT INTO survey_choices (
     question_id,
     choice_text,
@@ -966,6 +1004,11 @@ AND NOT EXISTS (
 
 );
 
+
+-- =========================================================
+-- SAMPLE SURVEY CHOICES
+-- QUESTION 3 - SERVICES
+-- =========================================================
 
 INSERT INTO survey_choices (
     question_id,
