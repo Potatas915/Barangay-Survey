@@ -13,7 +13,7 @@ require_staff_login();
 
 $resident_id =
     (int) (
-        $_GET["resident_id"]    
+        $_GET["resident_id"]
         ?? $_POST["resident_id"]
         ?? 0
     );
@@ -2713,6 +2713,7 @@ include __DIR__ . "/../includes/staff_topbar.php";
 
     <form
         method="POST"
+        id="residentEditForm"
     >
 
         <input
@@ -3636,6 +3637,23 @@ include __DIR__ . "/../includes/staff_topbar.php";
 
 <script src="../assets/js/script.js"></script>
 
+<script>
+// Confirm before actually saving the resident's information
+const residentEditForm = document.getElementById("residentEditForm");
+if (residentEditForm) {
+    residentEditForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+        openConfirmModal({
+            title: "Save these changes?",
+            message: "This will update the resident's information.",
+            confirmLabel: "Save Changes",
+            danger: false,
+            confirmClass: "",
+            onConfirm: () => residentEditForm.submit()
+        });
+    });
+}
+</script>
 
 <script>
 
