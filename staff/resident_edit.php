@@ -1,380 +1,3583 @@
 <?php
+
 require_once __DIR__ . "/../includes/functions.php";
+
 require_staff_login();
 
-$resident_id = (int)($_GET["resident_id"] ?? ($_POST["resident_id"] ?? 0));
+
+/*
+|--------------------------------------------------------------------------
+| Resident ID
+|--------------------------------------------------------------------------
+*/
+
+$resident_id =
+    (int) (
+        $_GET["resident_id"]
+        ?? $_POST["resident_id"]
+        ?? 0
+    );
+
+
 $success = "";
 $error = "";
 $photo_error = "";
 $child_error = "";
 
-// ---------------------------------------------------------
-// Update personal / family / reference information
-// ---------------------------------------------------------
-if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["update_resident"])) {
-    $resident_number   = trim($_POST["resident_number"]);
-    $first_name        = trim($_POST["first_name"]);
-    $middle_name       = trim($_POST["middle_name"]);
-    $last_name         = trim($_POST["last_name"]);
-    $extension_name    = trim($_POST["extension_name"]);
-    $civil_status      = trim($_POST["civil_status"]);
-    $email             = trim($_POST["email"]);
-    $contact_number    = trim($_POST["contact_number"]);
-    $address           = trim($_POST["address"]);
-    $birthday          = trim($_POST["birthday"]);
-    $occupation        = trim($_POST["occupation"]);
-    $employer          = trim($_POST["employer"]);
-    $employer_address  = trim($_POST["employer_address"]);
-    $father_name       = trim($_POST["father_name"]);
-    $mother_name       = trim($_POST["mother_name"]);
-    $spouse_name       = trim($_POST["spouse_name"]);
-    $spouse_occupation = trim($_POST["spouse_occupation"]);
-    $spouse_employer   = trim($_POST["spouse_employer"]);
-    $reference1_name      = trim($_POST["reference1_name"]);
-    $reference1_signature = trim($_POST["reference1_signature"]);
-    $reference2_name      = trim($_POST["reference2_name"]);
-    $reference2_signature = trim($_POST["reference2_signature"]);
 
-    if ($resident_number === "" || $first_name === "" || $last_name === "") {
-        $error = "Resident number, first name, and last name are required.";
-    } else {
-        $dup = $conn->prepare("SELECT resident_id FROM residents WHERE resident_number = ? AND resident_id != ?");
-        $dup->bind_param("si", $resident_number, $resident_id);
-        $dup->execute();
-        if ($dup->get_result()->num_rows > 0) {
-            $error = "Resident number is already used by another resident.";
-        } else {
-            $age = calculate_age($birthday);
-            $birthday_sql = $birthday !== "" ? $birthday : null;
-            $civil_status_sql = $civil_status !== "" ? $civil_status : null;
+/*
+|--------------------------------------------------------------------------
+| Validate Resident ID
+|--------------------------------------------------------------------------
+*/
 
-            $stmt = $conn->prepare("
-                UPDATE residents SET
-                    resident_number = ?, first_name = ?, middle_name = ?, last_name = ?, extension_name = ?,
-                    civil_status = ?, email = ?, contact_number = ?, address = ?,
-                    birthday = ?, age = ?, occupation = ?, employer = ?, employer_address = ?,
-                    father_name = ?, mother_name = ?,
-                    spouse_name = ?, spouse_occupation = ?, spouse_employer = ?,
-                    reference1_name = ?, reference1_signature = ?,
-                    reference2_name = ?, reference2_signature = ?
-                WHERE resident_id = ?
+if ($resident_id <= 0) {
+
+    redirect(
+        "resident_management.php"
+    );
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| Helper: Get Resident
+|--------------------------------------------------------------------------
+*/
+
+function get_edit_resident(
+    $conn,
+    $resident_id
+) {
+
+    $stmt =
+        $conn->prepare("
+            SELECT *
+            FROM residents
+            WHERE resident_id = ?
+            LIMIT 1
+        ");
+
+
+    if (!$stmt) {
+
+        return null;
+
+    }
+
+
+    $stmt->bind_param(
+        "i",
+        $resident_id
+    );
+
+
+    $stmt->execute();
+
+
+    $resident =
+        $stmt
+            ->get_result()
+            ->fetch_assoc();
+
+
+    $stmt->close();
+
+
+    return $resident;
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| Helper: Get Spouse
+|--------------------------------------------------------------------------
+|
+| Spouse information is stored directly in residents.
+|--------------------------------------------------------------------------
+*/
+
+function get_edit_spouse(
+    $conn,
+    $resident_id
+) {
+
+    $spouse = [
+
+        "spouse_name" =>
+            "",
+
+        "occupation" =>
+            "",
+
+        "employer" =>
+            ""
+
+    ];
+
+
+    $stmt =
+        $conn->prepare("
+            SELECT
+                spouse_name,
+                spouse_occupation,
+                spouse_employer
+            FROM residents
+            WHERE resident_id = ?
+            LIMIT 1
+        ");
+
+
+    if (!$stmt) {
+
+        return $spouse;
+
+    }
+
+
+    $stmt->bind_param(
+        "i",
+        $resident_id
+    );
+
+
+    $stmt->execute();
+
+
+    $result =
+        $stmt
+            ->get_result()
+            ->fetch_assoc();
+
+
+    if ($result) {
+
+        $spouse = [
+
+            "spouse_name" =>
+                $result["spouse_name"] ?? "",
+
+            "occupation" =>
+                $result["spouse_occupation"] ?? "",
+
+            "employer" =>
+                $result["spouse_employer"] ?? ""
+
+        ];
+
+    }
+
+
+    $stmt->close();
+
+
+    return $spouse;
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| Helper: Get Parents
+|--------------------------------------------------------------------------
+|
+| Parent information is stored directly in residents.
+|--------------------------------------------------------------------------
+*/
+
+function get_edit_parents(
+    $conn,
+    $resident_id
+) {
+
+    $parents = [
+
+        "father_name" =>
+            "",
+
+        "mother_name" =>
+            ""
+
+    ];
+
+
+    $stmt =
+        $conn->prepare("
+            SELECT
+                father_name,
+                mother_name
+            FROM residents
+            WHERE resident_id = ?
+            LIMIT 1
+        ");
+
+
+    if (!$stmt) {
+
+        return $parents;
+
+    }
+
+
+    $stmt->bind_param(
+        "i",
+        $resident_id
+    );
+
+
+    $stmt->execute();
+
+
+    $result =
+        $stmt
+            ->get_result()
+            ->fetch_assoc();
+
+
+    if ($result) {
+
+        $parents = [
+
+            "father_name" =>
+                $result["father_name"] ?? "",
+
+            "mother_name" =>
+                $result["mother_name"] ?? ""
+
+        ];
+
+    }
+
+
+    $stmt->close();
+
+
+    return $parents;
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| Helper: Get Children
+|--------------------------------------------------------------------------
+*/
+
+function get_edit_children(
+    $conn,
+    $resident_id
+) {
+
+    $children = [];
+
+
+    $stmt =
+        $conn->prepare("
+            SELECT
+                child_id,
+                child_name,
+                age
+            FROM resident_children
+            WHERE resident_id = ?
+            ORDER BY child_id ASC
+        ");
+
+
+    if (!$stmt) {
+
+        return $children;
+
+    }
+
+
+    $stmt->bind_param(
+        "i",
+        $resident_id
+    );
+
+
+    $stmt->execute();
+
+
+    $result =
+        $stmt
+            ->get_result();
+
+
+    while (
+        $row =
+        $result->fetch_assoc()
+    ) {
+
+        $children[] = [
+
+            "child_id" =>
+                (int) $row["child_id"],
+
+            "child_name" =>
+                $row["child_name"],
+
+            "age" =>
+                $row["age"]
+
+        ];
+
+    }
+
+
+    $stmt->close();
+
+
+    return $children;
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| Helper: Get References
+|--------------------------------------------------------------------------
+|
+| Character references are stored directly in residents.
+|--------------------------------------------------------------------------
+*/
+
+function get_edit_references(
+    $conn,
+    $resident_id
+) {
+
+    $references = [];
+
+
+    $stmt =
+        $conn->prepare("
+            SELECT
+                reference1_name,
+                reference1_signature,
+                reference2_name,
+                reference2_signature
+            FROM residents
+            WHERE resident_id = ?
+            LIMIT 1
+        ");
+
+
+    if (!$stmt) {
+
+        return $references;
+
+    }
+
+
+    $stmt->bind_param(
+        "i",
+        $resident_id
+    );
+
+
+    $stmt->execute();
+
+
+    $result =
+        $stmt
+            ->get_result()
+            ->fetch_assoc();
+
+
+    if ($result) {
+
+        if (
+            !empty(
+                $result["reference1_name"]
+            ) ||
+            !empty(
+                $result["reference1_signature"]
+            )
+        ) {
+
+            $references[] = [
+
+                "reference_name" =>
+                    $result["reference1_name"] ?? "",
+
+                "signature" =>
+                    $result["reference1_signature"] ?? "",
+
+                "reference_order" =>
+                    1
+
+            ];
+
+        }
+
+
+        if (
+            !empty(
+                $result["reference2_name"]
+            ) ||
+            !empty(
+                $result["reference2_signature"]
+            )
+        ) {
+
+            $references[] = [
+
+                "reference_name" =>
+                    $result["reference2_name"] ?? "",
+
+                "signature" =>
+                    $result["reference2_signature"] ?? "",
+
+                "reference_order" =>
+                    2
+
+            ];
+
+        }
+
+    }
+
+
+    $stmt->close();
+
+
+    return $references;
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| Helper: Build Complete Resident Snapshot
+|--------------------------------------------------------------------------
+|
+| Password is intentionally excluded.
+|--------------------------------------------------------------------------
+*/
+
+function build_edit_snapshot(
+    $conn,
+    $resident_id
+) {
+
+    $resident =
+        get_edit_resident(
+            $conn,
+            $resident_id
+        );
+
+
+    if (!$resident) {
+
+        return null;
+
+    }
+
+
+    $children =
+        get_edit_children(
+            $conn,
+            $resident_id
+        );
+
+
+    $clean_children = [];
+
+
+    foreach (
+        $children
+        as $child
+    ) {
+
+        $clean_children[] = [
+
+            "child_name" =>
+                $child["child_name"],
+
+            "age" =>
+                $child["age"]
+
+        ];
+
+    }
+
+
+    $references =
+        get_edit_references(
+            $conn,
+            $resident_id
+        );
+
+
+    $clean_references = [];
+
+
+    foreach (
+        $references
+        as $reference
+    ) {
+
+        $clean_references[] = [
+
+            "reference_name" =>
+                $reference["reference_name"],
+
+            "signature" =>
+                $reference["signature"],
+
+            "reference_order" =>
+                $reference["reference_order"]
+
+        ];
+
+    }
+
+
+    $spouse = [
+
+        "spouse_name" =>
+            $resident["spouse_name"] ?? "",
+
+        "occupation" =>
+            $resident["spouse_occupation"] ?? "",
+
+        "employer" =>
+            $resident["spouse_employer"] ?? ""
+
+    ];
+
+
+    $parents = [
+
+        "father_name" =>
+            $resident["father_name"] ?? "",
+
+        "mother_name" =>
+            $resident["mother_name"] ?? ""
+
+    ];
+
+
+    return [
+
+        "personal_information" => [
+
+            "resident_number" =>
+                $resident["resident_number"],
+
+            "first_name" =>
+                $resident["first_name"],
+
+            "middle_name" =>
+                $resident["middle_name"],
+
+            "last_name" =>
+                $resident["last_name"],
+
+            "extension_name" =>
+                $resident["extension_name"],
+
+            "civil_status" =>
+                $resident["civil_status"],
+
+            "birthday" =>
+                $resident["birthday"],
+
+            "age" =>
+                $resident["age"],
+
+            "occupation" =>
+                $resident["occupation"],
+
+            "employer" =>
+                $resident["employer"],
+
+            "employer_address" =>
+                $resident["employer_address"],
+
+            "email" =>
+                $resident["email"],
+
+            "contact_number" =>
+                $resident["contact_number"],
+
+            "address" =>
+                $resident["address"]
+
+        ],
+
+
+        "spouse" => (
+
+            $spouse["spouse_name"] !== ""
+            ||
+            $spouse["occupation"] !== ""
+            ||
+            $spouse["employer"] !== ""
+
+        )
+            ? $spouse
+            : null,
+
+
+        "parents" => (
+
+            $parents["father_name"] !== ""
+            ||
+            $parents["mother_name"] !== ""
+
+        )
+            ? $parents
+            : null,
+
+
+        "children" =>
+            $clean_children,
+
+
+        "references" =>
+            $clean_references
+
+    ];
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| Helper: Save Update History
+|--------------------------------------------------------------------------
+*/
+
+function save_edit_history(
+    $conn,
+    $resident_id,
+    $old_snapshot,
+    $new_snapshot
+) {
+
+    $old_json_compare =
+        json_encode(
+            $old_snapshot,
+            JSON_UNESCAPED_UNICODE |
+            JSON_UNESCAPED_SLASHES
+        );
+
+
+    $new_json_compare =
+        json_encode(
+            $new_snapshot,
+            JSON_UNESCAPED_UNICODE |
+            JSON_UNESCAPED_SLASHES
+        );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Nothing changed
+    |--------------------------------------------------------------------------
+    */
+
+    if (
+        $old_json_compare ===
+        $new_json_compare
+    ) {
+
+        return true;
+
+    }
+
+
+    $staff_id =
+        isset(
+            $_SESSION["staff_id"]
+        )
+            ? (int) $_SESSION["staff_id"]
+            : null;
+
+
+    $old_data =
+        json_encode(
+            $old_snapshot,
+            JSON_UNESCAPED_UNICODE |
+            JSON_UNESCAPED_SLASHES |
+            JSON_PRETTY_PRINT
+        );
+
+
+    $new_data =
+        json_encode(
+            $new_snapshot,
+            JSON_UNESCAPED_UNICODE |
+            JSON_UNESCAPED_SLASHES |
+            JSON_PRETTY_PRINT
+        );
+
+
+    $stmt =
+        $conn->prepare("
+            INSERT INTO resident_update_history
+            (
+                resident_id,
+                updated_by_type,
+                updated_by_id,
+                update_section,
+                old_data,
+                new_data
+            )
+            VALUES
+            (
+                ?,
+                'staff',
+                ?,
+                'complete_profile',
+                ?,
+                ?
+            )
+        ");
+
+
+    if (!$stmt) {
+
+        throw new Exception(
+            "Unable to prepare update history."
+        );
+
+    }
+
+
+    $stmt->bind_param(
+        "iiss",
+        $resident_id,
+        $staff_id,
+        $old_data,
+        $new_data
+    );
+
+
+    if (
+        !$stmt->execute()
+    ) {
+
+        $stmt->close();
+
+
+        throw new Exception(
+            "Unable to save update history."
+        );
+
+    }
+
+
+    $stmt->close();
+
+
+    return true;
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| Load Resident
+|--------------------------------------------------------------------------
+*/
+
+$resident =
+    get_edit_resident(
+        $conn,
+        $resident_id
+    );
+
+
+if (!$resident) {
+
+    redirect(
+        "resident_management.php"
+    );
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| Update Resident Information
+|--------------------------------------------------------------------------
+*/
+
+if (
+    $_SERVER["REQUEST_METHOD"] === "POST"
+    &&
+    isset(
+        $_POST["update_resident"]
+    )
+) {
+
+    $resident_number =
+        trim(
+            $_POST["resident_number"]
+            ?? ""
+        );
+
+
+    $first_name =
+        trim(
+            $_POST["first_name"]
+            ?? ""
+        );
+
+
+    $middle_name =
+        trim(
+            $_POST["middle_name"]
+            ?? ""
+        );
+
+
+    $last_name =
+        trim(
+            $_POST["last_name"]
+            ?? ""
+        );
+
+
+    $extension_name =
+        trim(
+            $_POST["extension_name"]
+            ?? ""
+        );
+
+
+    $civil_status =
+        trim(
+            $_POST["civil_status"]
+            ?? ""
+        );
+
+
+    $email =
+        trim(
+            $_POST["email"]
+            ?? ""
+        );
+
+
+    $contact_number =
+        trim(
+            $_POST["contact_number"]
+            ?? ""
+        );
+
+
+    $address =
+        trim(
+            $_POST["address"]
+            ?? ""
+        );
+
+
+    $birthday =
+        trim(
+            $_POST["birthday"]
+            ?? ""
+        );
+
+
+    $occupation =
+        trim(
+            $_POST["occupation"]
+            ?? ""
+        );
+
+
+    $employer =
+        trim(
+            $_POST["employer"]
+            ?? ""
+        );
+
+
+    $employer_address =
+        trim(
+            $_POST["employer_address"]
+            ?? ""
+        );
+
+
+    $father_name =
+        trim(
+            $_POST["father_name"]
+            ?? ""
+        );
+
+
+    $mother_name =
+        trim(
+            $_POST["mother_name"]
+            ?? ""
+        );
+
+
+    $spouse_name =
+        trim(
+            $_POST["spouse_name"]
+            ?? ""
+        );
+
+
+    $spouse_occupation =
+        trim(
+            $_POST["spouse_occupation"]
+            ?? ""
+        );
+
+
+    $spouse_employer =
+        trim(
+            $_POST["spouse_employer"]
+            ?? ""
+        );
+
+
+    $reference1_name =
+        trim(
+            $_POST["reference1_name"]
+            ?? ""
+        );
+
+
+    $reference1_signature =
+        trim(
+            $_POST["reference1_signature"]
+            ?? ""
+        );
+
+
+    $reference2_name =
+        trim(
+            $_POST["reference2_name"]
+            ?? ""
+        );
+
+
+    $reference2_signature =
+        trim(
+            $_POST["reference2_signature"]
+            ?? ""
+        );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Validation
+    |--------------------------------------------------------------------------
+    */
+
+    if (
+        $resident_number === ""
+        ||
+        $first_name === ""
+        ||
+        $last_name === ""
+    ) {
+
+        $error =
+            "Resident number, first name, and last name are required.";
+
+    }
+
+
+    elseif (
+        !preg_match(
+            "/^[A-Za-z0-9\-]+$/",
+            $resident_number
+        )
+    ) {
+
+        $error =
+            "Resident number contains invalid characters.";
+
+    }
+
+
+    elseif (
+        !preg_match(
+            "/^[\p{L}\s.'-]+$/u",
+            $first_name
+        )
+    ) {
+
+        $error =
+            "First name contains invalid characters.";
+
+    }
+
+
+    elseif (
+        $middle_name !== ""
+        &&
+        !preg_match(
+            "/^[\p{L}\s.'-]+$/u",
+            $middle_name
+        )
+    ) {
+
+        $error =
+            "Middle name contains invalid characters.";
+
+    }
+
+
+    elseif (
+        !preg_match(
+            "/^[\p{L}\s.'-]+$/u",
+            $last_name
+        )
+    ) {
+
+        $error =
+            "Last name contains invalid characters.";
+
+    }
+
+
+    elseif (
+        $extension_name !== ""
+        &&
+        !preg_match(
+            "/^[A-Za-z0-9\s.'-]+$/",
+            $extension_name
+        )
+    ) {
+
+        $error =
+            "Extension name contains invalid characters.";
+
+    }
+
+
+    elseif (
+        $civil_status !== ""
+        &&
+        !in_array(
+            $civil_status,
+            [
+                "Single",
+                "Married",
+                "Widowed",
+                "Separated",
+                "Divorced"
+            ],
+            true
+        )
+    ) {
+
+        $error =
+            "Please select a valid civil status.";
+
+    }
+
+
+    elseif (
+        $email !== ""
+        &&
+        !filter_var(
+            $email,
+            FILTER_VALIDATE_EMAIL
+        )
+    ) {
+
+        $error =
+            "Please enter a valid email address.";
+
+    }
+
+
+    elseif (
+        $contact_number !== ""
+        &&
+        !preg_match(
+            "/^09[0-9]{9}$/",
+            $contact_number
+        )
+    ) {
+
+        $error =
+            "Contact number must contain exactly 11 digits and start with 09.";
+
+    }
+
+
+    elseif (
+        $birthday !== ""
+        &&
+        (
+            !DateTime::createFromFormat(
+                "Y-m-d",
+                $birthday
+            )
+            ||
+            $birthday >
+            date("Y-m-d")
+        )
+    ) {
+
+        $error =
+            "Please enter a valid birthday.";
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Duplicate Resident Number
+    |--------------------------------------------------------------------------
+    */
+
+    if (
+        $error === ""
+    ) {
+
+        $dup =
+            $conn->prepare("
+                SELECT resident_id
+                FROM residents
+                WHERE resident_number = ?
+                AND resident_id != ?
+                LIMIT 1
             ");
-            $stmt->bind_param(
-                "ssssssssssissssssssssssi",
-                $resident_number, $first_name, $middle_name, $last_name, $extension_name,
-                $civil_status_sql, $email, $contact_number, $address,
-                $birthday_sql, $age, $occupation, $employer, $employer_address,
-                $father_name, $mother_name,
-                $spouse_name, $spouse_occupation, $spouse_employer,
-                $reference1_name, $reference1_signature,
-                $reference2_name, $reference2_signature,
+
+
+        if (!$dup) {
+
+            $error =
+                "Unable to validate resident number.";
+
+        }
+        else {
+
+            $dup->bind_param(
+                "si",
+                $resident_number,
                 $resident_id
             );
 
-            if ($stmt->execute()) {
-                $success = "Resident information updated successfully.";
-            } else {
-                $error = "Unable to update resident. Please try again.";
+
+            $dup->execute();
+
+
+            if (
+                $dup
+                    ->get_result()
+                    ->num_rows > 0
+            ) {
+
+                $error =
+                    "Resident number is already used by another resident.";
+
             }
+
+
+            $dup->close();
+
         }
+
     }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Continue only when validation passed
+    |--------------------------------------------------------------------------
+    */
+
+    if (
+        $error === ""
+    ) {
+
+        try {
+
+            $conn->begin_transaction();
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | BEFORE SNAPSHOT
+            |--------------------------------------------------------------------------
+            */
+
+            $old_snapshot =
+                build_edit_snapshot(
+                    $conn,
+                    $resident_id
+                );
+
+
+            if (!$old_snapshot) {
+
+                throw new Exception(
+                    "Unable to load the resident's existing information."
+                );
+
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Calculate Age
+            |--------------------------------------------------------------------------
+            */
+
+            $age = null;
+
+
+            if (
+                $birthday !== ""
+            ) {
+
+                $birth_date =
+                    new DateTime(
+                        $birthday
+                    );
+
+
+                $today =
+                    new DateTime();
+
+
+                $age =
+                    $birth_date
+                        ->diff($today)
+                        ->y;
+
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | SQL NULL values
+            |--------------------------------------------------------------------------
+            */
+
+            $birthday_sql =
+                $birthday !== ""
+                    ? $birthday
+                    : null;
+
+
+            $middle_name_sql =
+                $middle_name !== ""
+                    ? $middle_name
+                    : null;
+
+
+            $extension_name_sql =
+                $extension_name !== ""
+                    ? $extension_name
+                    : null;
+
+
+            $civil_status_sql =
+                $civil_status !== ""
+                    ? $civil_status
+                    : null;
+
+
+            $email_sql =
+                $email !== ""
+                    ? $email
+                    : null;
+
+
+            $contact_number_sql =
+                $contact_number !== ""
+                    ? $contact_number
+                    : null;
+
+
+            $address_sql =
+                $address !== ""
+                    ? $address
+                    : null;
+
+
+            $occupation_sql =
+                $occupation !== ""
+                    ? $occupation
+                    : null;
+
+
+            $employer_sql =
+                $employer !== ""
+                    ? $employer
+                    : null;
+
+
+            $employer_address_sql =
+                $employer_address !== ""
+                    ? $employer_address
+                    : null;
+
+
+            $father_name_sql =
+                $father_name !== ""
+                    ? $father_name
+                    : null;
+
+
+            $mother_name_sql =
+                $mother_name !== ""
+                    ? $mother_name
+                    : null;
+
+
+            $spouse_name_sql =
+                $spouse_name !== ""
+                    ? $spouse_name
+                    : null;
+
+
+            $spouse_occupation_sql =
+                $spouse_occupation !== ""
+                    ? $spouse_occupation
+                    : null;
+
+
+            $spouse_employer_sql =
+                $spouse_employer !== ""
+                    ? $spouse_employer
+                    : null;
+
+
+            $reference1_name_sql =
+                $reference1_name !== ""
+                    ? $reference1_name
+                    : null;
+
+
+            $reference1_signature_sql =
+                $reference1_signature !== ""
+                    ? $reference1_signature
+                    : null;
+
+
+            $reference2_name_sql =
+                $reference2_name !== ""
+                    ? $reference2_name
+                    : null;
+
+
+            $reference2_signature_sql =
+                $reference2_signature !== ""
+                    ? $reference2_signature
+                    : null;
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | UPDATE RESIDENT
+            |--------------------------------------------------------------------------
+            |
+            | Parents, spouse, and references are all stored directly in
+            | residents according to the current Set A database.
+            |--------------------------------------------------------------------------
+            */
+
+            $stmt =
+                $conn->prepare("
+                    UPDATE residents
+                    SET
+                        resident_number = ?,
+                        first_name = ?,
+                        middle_name = ?,
+                        last_name = ?,
+                        extension_name = ?,
+                        civil_status = ?,
+                        email = ?,
+                        contact_number = ?,
+                        address = ?,
+                        birthday = ?,
+                        age = ?,
+                        occupation = ?,
+                        employer = ?,
+                        employer_address = ?,
+                        father_name = ?,
+                        mother_name = ?,
+                        spouse_name = ?,
+                        spouse_occupation = ?,
+                        spouse_employer = ?,
+                        reference1_name = ?,
+                        reference1_signature = ?,
+                        reference2_name = ?,
+                        reference2_signature = ?
+                    WHERE resident_id = ?
+                ");
+
+
+            if (!$stmt) {
+
+                throw new Exception(
+                    "Unable to prepare resident update."
+                );
+
+            }
+
+
+            $stmt->bind_param(
+                "ssssssssssissssssssssssi",
+                $resident_number,
+                $first_name,
+                $middle_name_sql,
+                $last_name,
+                $extension_name_sql,
+                $civil_status_sql,
+                $email_sql,
+                $contact_number_sql,
+                $address_sql,
+                $birthday_sql,
+                $age,
+                $occupation_sql,
+                $employer_sql,
+                $employer_address_sql,
+                $father_name_sql,
+                $mother_name_sql,
+                $spouse_name_sql,
+                $spouse_occupation_sql,
+                $spouse_employer_sql,
+                $reference1_name_sql,
+                $reference1_signature_sql,
+                $reference2_name_sql,
+                $reference2_signature_sql,
+                $resident_id
+            );
+
+
+            if (
+                !$stmt->execute()
+            ) {
+
+                $stmt->close();
+
+
+                throw new Exception(
+                    "Unable to update resident information."
+                );
+
+            }
+
+
+            $stmt->close();
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | AFTER SNAPSHOT
+            |--------------------------------------------------------------------------
+            */
+
+            $new_snapshot =
+                build_edit_snapshot(
+                    $conn,
+                    $resident_id
+                );
+
+
+            if (!$new_snapshot) {
+
+                throw new Exception(
+                    "Unable to create the updated resident snapshot."
+                );
+
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Save History
+            |--------------------------------------------------------------------------
+            */
+
+            save_edit_history(
+                $conn,
+                $resident_id,
+                $old_snapshot,
+                $new_snapshot
+            );
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Commit
+            |--------------------------------------------------------------------------
+            */
+
+            $conn->commit();
+
+
+            $success =
+                "Resident information updated successfully.";
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Reload Resident
+            |--------------------------------------------------------------------------
+            */
+
+            $resident =
+                get_edit_resident(
+                    $conn,
+                    $resident_id
+                );
+
+        }
+        catch (
+            Throwable $exception
+        ) {
+
+            try {
+
+                $conn->rollback();
+
+            }
+            catch (
+                Throwable $rollback_exception
+            ) {
+            }
+
+
+            $error =
+                $exception->getMessage();
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Hide technical database errors
+            |--------------------------------------------------------------------------
+            */
+
+            if (
+                $error === ""
+                ||
+                stripos(
+                    $error,
+                    "column"
+                ) !== false
+                ||
+                stripos(
+                    $error,
+                    "table"
+                ) !== false
+                ||
+                stripos(
+                    $error,
+                    "sql"
+                ) !== false
+                ||
+                stripos(
+                    $error,
+                    "mysqli"
+                ) !== false
+            ) {
+
+                $error =
+                    "Unable to update resident. Please try again.";
+
+            }
+
+        }
+
+    }
+
 }
 
-// ---------------------------------------------------------
-// Upload / replace photo (staff can do this on behalf of a resident too)
-// ---------------------------------------------------------
-if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["upload_photo"])) {
-    [$new_photo, $upload_err] = save_resident_photo($resident_id, $_FILES["photo"] ?? null);
+
+/*
+|--------------------------------------------------------------------------
+| Upload / Replace Photo
+|--------------------------------------------------------------------------
+*/
+
+if (
+    $_SERVER["REQUEST_METHOD"] === "POST"
+    &&
+    isset(
+        $_POST["upload_photo"]
+    )
+) {
+
+    [$new_photo, $upload_err] =
+        save_resident_photo(
+            $resident_id,
+            $_FILES["photo"] ?? null
+        );
+
+
     if ($upload_err) {
-        $photo_error = $upload_err;
-    } elseif ($new_photo) {
-        $old = $conn->prepare("SELECT photo FROM residents WHERE resident_id = ?");
-        $old->bind_param("i", $resident_id);
-        $old->execute();
-        $old_photo = $old->get_result()->fetch_assoc()["photo"] ?? null;
 
-        $stmt = $conn->prepare("UPDATE residents SET photo = ? WHERE resident_id = ?");
-        $stmt->bind_param("si", $new_photo, $resident_id);
-        if ($stmt->execute()) {
-            delete_resident_photo($old_photo);
-            $success = "Photo updated successfully.";
-        } else {
-            $photo_error = "Unable to save photo.";
+        $photo_error =
+            $upload_err;
+
+    }
+
+
+    elseif (
+        $new_photo
+    ) {
+
+        try {
+
+            $conn->begin_transaction();
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Get old photo
+            |--------------------------------------------------------------------------
+            */
+
+            $old =
+                $conn->prepare("
+                    SELECT photo
+                    FROM residents
+                    WHERE resident_id = ?
+                    LIMIT 1
+                ");
+
+
+            if (!$old) {
+
+                throw new Exception(
+                    "Unable to load current photo."
+                );
+
+            }
+
+
+            $old->bind_param(
+                "i",
+                $resident_id
+            );
+
+
+            $old->execute();
+
+
+            $old_row =
+                $old
+                    ->get_result()
+                    ->fetch_assoc();
+
+
+            $old_photo =
+                $old_row["photo"]
+                ?? null;
+
+
+            $old->close();
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Update photo
+            |--------------------------------------------------------------------------
+            */
+
+            $stmt =
+                $conn->prepare("
+                    UPDATE residents
+                    SET photo = ?
+                    WHERE resident_id = ?
+                ");
+
+
+            if (!$stmt) {
+
+                throw new Exception(
+                    "Unable to prepare photo update."
+                );
+
+            }
+
+
+            $stmt->bind_param(
+                "si",
+                $new_photo,
+                $resident_id
+            );
+
+
+            if (
+                !$stmt->execute()
+            ) {
+
+                $stmt->close();
+
+
+                throw new Exception(
+                    "Unable to save photo."
+                );
+
+            }
+
+
+            $stmt->close();
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Save photo history
+            |--------------------------------------------------------------------------
+            */
+
+            $staff_id =
+                isset(
+                    $_SESSION["staff_id"]
+                )
+                    ? (int)
+                        $_SESSION["staff_id"]
+                    : null;
+
+
+            $photo_old_data =
+                json_encode(
+                    [
+                        "photo" =>
+                            $old_photo
+                    ],
+                    JSON_UNESCAPED_UNICODE |
+                    JSON_UNESCAPED_SLASHES |
+                    JSON_PRETTY_PRINT
+                );
+
+
+            $photo_new_data =
+                json_encode(
+                    [
+                        "photo" =>
+                            $new_photo
+                    ],
+                    JSON_UNESCAPED_UNICODE |
+                    JSON_UNESCAPED_SLASHES |
+                    JSON_PRETTY_PRINT
+                );
+
+
+            $photo_history =
+                $conn->prepare("
+                    INSERT INTO resident_update_history
+                    (
+                        resident_id,
+                        updated_by_type,
+                        updated_by_id,
+                        update_section,
+                        old_data,
+                        new_data
+                    )
+                    VALUES
+                    (
+                        ?,
+                        'staff',
+                        ?,
+                        'photo',
+                        ?,
+                        ?
+                    )
+                ");
+
+
+            if (!$photo_history) {
+
+                throw new Exception(
+                    "Unable to prepare photo history."
+                );
+
+            }
+
+
+            $photo_history->bind_param(
+                "iiss",
+                $resident_id,
+                $staff_id,
+                $photo_old_data,
+                $photo_new_data
+            );
+
+
+            if (
+                !$photo_history->execute()
+            ) {
+
+                $photo_history->close();
+
+
+                throw new Exception(
+                    "Unable to save photo history."
+                );
+
+            }
+
+
+            $photo_history->close();
+
+
+            $conn->commit();
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Delete old physical file only after successful commit
+            |--------------------------------------------------------------------------
+            */
+
+            if (
+                $old_photo
+            ) {
+
+                delete_resident_photo(
+                    $old_photo
+                );
+
+            }
+
+
+            $success =
+                "Photo updated successfully.";
+
+
+            $resident =
+                get_edit_resident(
+                    $conn,
+                    $resident_id
+                );
+
         }
-    } else {
-        $photo_error = "Please choose a photo to upload.";
+        catch (
+            Throwable $exception
+        ) {
+
+            try {
+
+                $conn->rollback();
+
+            }
+            catch (
+                Throwable $rollback_exception
+            ) {
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Delete newly uploaded file if database update failed
+            |--------------------------------------------------------------------------
+            */
+
+            delete_resident_photo(
+                $new_photo
+            );
+
+
+            $photo_error =
+                "Unable to save photo. Please try again.";
+
+        }
+
     }
-}
 
-// ---------------------------------------------------------
-// Add / remove a child
-// ---------------------------------------------------------
-if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["add_child"])) {
-    $child_name = trim($_POST["child_name"]);
-    $child_age  = trim($_POST["child_age"]);
 
-    if ($child_name === "") {
-        $child_error = "Child's name is required.";
-    } else {
-        $child_age_sql = ($child_age !== "" && is_numeric($child_age)) ? (int)$child_age : null;
-        $stmt = $conn->prepare("INSERT INTO resident_children (resident_id, child_name, age) VALUES (?, ?, ?)");
-        $stmt->bind_param("isi", $resident_id, $child_name, $child_age_sql);
-        $stmt->execute();
-        $success = "Child added.";
+    else {
+
+        $photo_error =
+            "Please choose a photo to upload.";
+
     }
+
 }
 
-if (isset($_GET["delete_child"])) {
-    $child_id = (int)$_GET["delete_child"];
-    $stmt = $conn->prepare("DELETE FROM resident_children WHERE child_id = ? AND resident_id = ?");
-    $stmt->bind_param("ii", $child_id, $resident_id);
-    $stmt->execute();
-    redirect("resident_edit.php?resident_id=" . $resident_id);
+
+/*
+|--------------------------------------------------------------------------
+| Add Child
+|--------------------------------------------------------------------------
+*/
+
+if (
+    $_SERVER["REQUEST_METHOD"] === "POST"
+    &&
+    isset(
+        $_POST["add_child"]
+    )
+) {
+
+    $child_name =
+        trim(
+            $_POST["child_name"]
+            ?? ""
+        );
+
+
+    $child_age =
+        trim(
+            $_POST["child_age"]
+            ?? ""
+        );
+
+
+    if (
+        $child_name === ""
+    ) {
+
+        $child_error =
+            "Child's name is required.";
+
+    }
+
+
+    elseif (
+        !preg_match(
+            "/^[\p{L}\s.'-]+$/u",
+            $child_name
+        )
+    ) {
+
+        $child_error =
+            "Child's name contains invalid characters.";
+
+    }
+
+
+    elseif (
+        $child_age !== ""
+        &&
+        (
+            !ctype_digit(
+                $child_age
+            )
+            ||
+            (int)$child_age < 0
+            ||
+            (int)$child_age > 120
+        )
+    ) {
+
+        $child_error =
+            "Child's age must be between 0 and 120.";
+
+    }
+
+
+    else {
+
+        try {
+
+            $conn->begin_transaction();
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | BEFORE
+            |--------------------------------------------------------------------------
+            */
+
+            $old_snapshot =
+                build_edit_snapshot(
+                    $conn,
+                    $resident_id
+                );
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Insert child
+            |--------------------------------------------------------------------------
+            */
+
+            $child_age_sql =
+                $child_age !== ""
+                    ? (int)$child_age
+                    : null;
+
+
+            $stmt =
+                $conn->prepare("
+                    INSERT INTO resident_children
+                    (
+                        resident_id,
+                        child_name,
+                        age
+                    )
+                    VALUES
+                    (
+                        ?,
+                        ?,
+                        ?
+                    )
+                ");
+
+
+            if (!$stmt) {
+
+                throw new Exception(
+                    "Unable to prepare child record."
+                );
+
+            }
+
+
+            $stmt->bind_param(
+                "isi",
+                $resident_id,
+                $child_name,
+                $child_age_sql
+            );
+
+
+            if (
+                !$stmt->execute()
+            ) {
+
+                $stmt->close();
+
+
+                throw new Exception(
+                    "Unable to add child."
+                );
+
+            }
+
+
+            $stmt->close();
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | AFTER
+            |--------------------------------------------------------------------------
+            */
+
+            $new_snapshot =
+                build_edit_snapshot(
+                    $conn,
+                    $resident_id
+                );
+
+
+            save_edit_history(
+                $conn,
+                $resident_id,
+                $old_snapshot,
+                $new_snapshot
+            );
+
+
+            $conn->commit();
+
+
+            $success =
+                "Child added successfully.";
+
+        }
+        catch (
+            Throwable $exception
+        ) {
+
+            try {
+
+                $conn->rollback();
+
+            }
+            catch (
+                Throwable $rollback_exception
+            ) {
+            }
+
+
+            $child_error =
+                "Unable to add child.";
+
+        }
+
+    }
+
 }
 
-$stmt = $conn->prepare("SELECT * FROM residents WHERE resident_id = ?");
-$stmt->bind_param("i", $resident_id);
-$stmt->execute();
-$resident = $stmt->get_result()->fetch_assoc();
+
+/*
+|--------------------------------------------------------------------------
+| Remove Child
+|--------------------------------------------------------------------------
+*/
+
+if (
+    isset(
+        $_GET["delete_child"]
+    )
+) {
+
+    $child_id =
+        (int)
+        $_GET["delete_child"];
+
+
+    if (
+        $child_id > 0
+    ) {
+
+        try {
+
+            $conn->begin_transaction();
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | BEFORE
+            |--------------------------------------------------------------------------
+            */
+
+            $old_snapshot =
+                build_edit_snapshot(
+                    $conn,
+                    $resident_id
+                );
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Delete only this resident's child
+            |--------------------------------------------------------------------------
+            */
+
+            $stmt =
+                $conn->prepare("
+                    DELETE FROM resident_children
+                    WHERE child_id = ?
+                    AND resident_id = ?
+                ");
+
+
+            if (!$stmt) {
+
+                throw new Exception(
+                    "Unable to prepare child deletion."
+                );
+
+            }
+
+
+            $stmt->bind_param(
+                "ii",
+                $child_id,
+                $resident_id
+            );
+
+
+            if (
+                !$stmt->execute()
+            ) {
+
+                $stmt->close();
+
+
+                throw new Exception(
+                    "Unable to remove child."
+                );
+
+            }
+
+
+            $deleted =
+                $stmt->affected_rows;
+
+
+            $stmt->close();
+
+
+            if (
+                $deleted === 0
+            ) {
+
+                throw new Exception(
+                    "Child record was not found."
+                );
+
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | AFTER
+            |--------------------------------------------------------------------------
+            */
+
+            $new_snapshot =
+                build_edit_snapshot(
+                    $conn,
+                    $resident_id
+                );
+
+
+            save_edit_history(
+                $conn,
+                $resident_id,
+                $old_snapshot,
+                $new_snapshot
+            );
+
+
+            $conn->commit();
+
+
+            redirect(
+                "resident_edit.php?resident_id=" .
+                $resident_id
+            );
+
+        }
+        catch (
+            Throwable $exception
+        ) {
+
+            try {
+
+                $conn->rollback();
+
+            }
+            catch (
+                Throwable $rollback_exception
+            ) {
+            }
+
+
+            $child_error =
+                "Unable to remove child.";
+
+        }
+
+    }
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| Reload All Data
+|--------------------------------------------------------------------------
+*/
+
+$resident =
+    get_edit_resident(
+        $conn,
+        $resident_id
+    );
+
 
 if (!$resident) {
-    redirect("resident_management.php");
+
+    redirect(
+        "resident_management.php"
+    );
+
 }
 
-$children_stmt = $conn->prepare("SELECT * FROM resident_children WHERE resident_id = ? ORDER BY child_id");
-$children_stmt->bind_param("i", $resident_id);
-$children_stmt->execute();
-$children = $children_stmt->get_result();
 
-$photo_url = resident_photo_url($resident["photo"]);
-$initials = strtoupper(substr($resident["first_name"], 0, 1) . substr($resident["last_name"], 0, 1));
-$civil_statuses = ["Single", "Married", "Widowed", "Separated", "Divorced"];
+$spouse =
+    get_edit_spouse(
+        $conn,
+        $resident_id
+    );
+
+
+$parents =
+    get_edit_parents(
+        $conn,
+        $resident_id
+    );
+
+
+$children =
+    get_edit_children(
+        $conn,
+        $resident_id
+    );
+
+
+$references =
+    get_edit_references(
+        $conn,
+        $resident_id
+    );
+
+
+/*
+|--------------------------------------------------------------------------
+| Photo / Initials
+|--------------------------------------------------------------------------
+*/
+
+$photo_url =
+    resident_photo_url(
+        $resident["photo"]
+        ?? ""
+    );
+
+
+$initials =
+    strtoupper(
+        substr(
+            $resident["first_name"]
+            ?? "",
+            0,
+            1
+        )
+        .
+        substr(
+            $resident["last_name"]
+            ?? "",
+            0,
+            1
+        )
+    );
+
+
+if (
+    $initials === ""
+) {
+
+    $initials =
+        "R";
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| Civil Status Options
+|--------------------------------------------------------------------------
+*/
+
+$civil_statuses = [
+
+    "Single",
+    "Married",
+    "Widowed",
+    "Separated",
+    "Divorced"
+
+];
+
 ?>
 <!DOCTYPE html>
+
 <html lang="en">
+
 <head>
+
 <meta charset="UTF-8">
-<title>Edit Resident</title>
-<link rel="stylesheet" href="../assets/css/style.css?v=<?= filemtime(__DIR__ . "/../assets/css/style.css") ?>">
-<script>(function(){var t=localStorage.getItem("theme");if(t==="dark")document.documentElement.setAttribute("data-theme","dark");})();</script>
-<script>(function(){try{if(localStorage.getItem("sidebarCollapsed")==="true")document.documentElement.setAttribute("data-sidebar","collapsed");}catch(e){}})();</script>
-</head>
-<body>
-<?php include __DIR__ . "/../includes/staff_nav.php"; ?>
-<div class="container">
-<?php include __DIR__ . "/../includes/staff_topbar.php"; ?>
 
-    <div class="welcome-header">
-        <div>
-            <h1>Edit Resident</h1>
-            <p><?= e(full_resident_name($resident)) ?> &middot; <?= e($resident["resident_number"]) ?></p>
-        </div>
-        <div class="table-actions">
-            <a class="btn btn-secondary" href="resident_view.php?resident_id=<?= $resident_id ?>">View / Print</a>
-            <a class="btn btn-secondary" href="resident_management.php">Back to List</a>
-        </div>
-    </div>
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
 
-    <div class="card">
-        <h2>Profile Photo</h2>
-        <?php if ($photo_error): ?><div class="error"><?= e($photo_error) ?></div><?php endif; ?>
-        <form method="POST" enctype="multipart/form-data" class="photo-uploader">
-            <input type="hidden" name="upload_photo" value="1">
-            <input type="hidden" name="resident_id" value="<?= $resident_id ?>">
-            <div class="avatar-lg">
-                <?php if ($photo_url): ?>
-                    <img src="<?= e($photo_url) ?>" alt="Resident photo">
-                <?php else: ?>
-                    <?= e($initials) ?>
-                <?php endif; ?>
-            </div>
-            <div>
-                <input type="file" name="photo" accept="image/png, image/jpeg, image/webp">
-                <p style="font-size:12px; color:#667; margin:6px 0 0;">Passport-size photo. JPG, PNG, or WEBP, up to 3MB.</p>
-                <button type="submit" class="btn btn-sm" style="margin-top:10px;">Upload Photo</button>
-            </div>
-        </form>
-    </div>
+<title>
+    Edit Resident
+</title>
 
-    <div class="card">
-        <h2>Resident Information</h2>
-        <?php if ($success): ?><div class="success"><?= e($success) ?></div><?php endif; ?>
-        <?php if ($error): ?><div class="error"><?= e($error) ?></div><?php endif; ?>
 
-        <form method="POST">
-            <input type="hidden" name="update_resident" value="1">
-            <input type="hidden" name="resident_id" value="<?= $resident_id ?>">
+<link
+    rel="stylesheet"
+    href="../assets/css/style.css?v=<?= filemtime(__DIR__ . "/../assets/css/style.css") ?>"
+>
 
-            <div class="form-section-title">Personal Information</div>
-            <div class="field-grid-2">
-                <div class="register-field">
-                    <label>Resident Number</label>
-                    <input type="text" name="resident_number" required value="<?= e($resident["resident_number"]) ?>">
-                </div>
-                <div class="register-field">
-                    <label>Civil Status</label>
-                    <select name="civil_status">
-                        <option value="">-- Select --</option>
-                        <?php foreach ($civil_statuses as $cs): ?>
-                        <option value="<?= e($cs) ?>" <?= $resident["civil_status"] === $cs ? "selected" : "" ?>><?= e($cs) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-                <div class="register-field">
-                    <label>Last Name</label>
-                    <input type="text" name="last_name" required value="<?= e($resident["last_name"]) ?>">
-                </div>
-                <div class="register-field">
-                    <label>First Name</label>
-                    <input type="text" name="first_name" required value="<?= e($resident["first_name"]) ?>">
-                </div>
-                <div class="register-field">
-                    <label>Middle Name</label>
-                    <input type="text" name="middle_name" value="<?= e($resident["middle_name"]) ?>">
-                </div>
-                <div class="register-field">
-                    <label>Extension Name</label>
-                    <input type="text" name="extension_name" value="<?= e($resident["extension_name"]) ?>">
-                </div>
-                <div class="register-field span-2">
-                    <label>Address</label>
-                    <input type="text" name="address" value="<?= e($resident["address"]) ?>">
-                </div>
-                <div class="register-field">
-                    <label>Email</label>
-                    <input type="email" name="email" value="<?= e($resident["email"]) ?>">
-                </div>
-                <div class="register-field">
-                    <label>Contact Number</label>
-                    <input type="text" name="contact_number" value="<?= e($resident["contact_number"]) ?>">
-                </div>
-                <div class="register-field">
-                    <label>Birthday</label>
-                    <input type="date" name="birthday" id="birthdayInput" value="<?= e($resident["birthday"]) ?>" max="<?= date('Y-m-d') ?>">
-                </div>
-                <div class="register-field">
-                    <label>Age</label>
-                    <input type="text" id="ageDisplay" value="<?= $resident["age"] !== null ? e($resident["age"]) : "" ?>" disabled placeholder="Auto-computed from birthday">
-                </div>
-                <div class="register-field">
-                    <label>Occupation</label>
-                    <input type="text" name="occupation" value="<?= e($resident["occupation"]) ?>">
-                </div>
-                <div class="register-field">
-                    <label>Employer</label>
-                    <input type="text" name="employer" value="<?= e($resident["employer"]) ?>">
-                </div>
-                <div class="register-field span-2">
-                    <label>Employer Address</label>
-                    <input type="text" name="employer_address" value="<?= e($resident["employer_address"]) ?>">
-                </div>
-            </div>
 
-            <div class="form-section-title">Parents</div>
-            <div class="field-grid-2">
-                <div class="register-field">
-                    <label>Father's Name</label>
-                    <input type="text" name="father_name" value="<?= e($resident["father_name"]) ?>">
-                </div>
-                <div class="register-field">
-                    <label>Mother's Name</label>
-                    <input type="text" name="mother_name" value="<?= e($resident["mother_name"]) ?>">
-                </div>
-            </div>
-
-            <div class="form-section-title">Spouse Information</div>
-            <div class="field-grid-2">
-                <div class="register-field">
-                    <label>Spouse Name</label>
-                    <input type="text" name="spouse_name" value="<?= e($resident["spouse_name"]) ?>">
-                </div>
-                <div class="register-field">
-                    <label>Occupation</label>
-                    <input type="text" name="spouse_occupation" value="<?= e($resident["spouse_occupation"]) ?>">
-                </div>
-                <div class="register-field">
-                    <label>Employer</label>
-                    <input type="text" name="spouse_employer" value="<?= e($resident["spouse_employer"]) ?>">
-                </div>
-            </div>
-
-            <div class="form-section-title">Character References</div>
-            <div class="field-grid-2">
-                <div class="register-field">
-                    <label>Reference 1 - Name</label>
-                    <input type="text" name="reference1_name" value="<?= e($resident["reference1_name"]) ?>">
-                </div>
-                <div class="register-field">
-                    <label>Reference 1 - Signature</label>
-                    <input type="text" name="reference1_signature" value="<?= e($resident["reference1_signature"]) ?>" placeholder="Optional">
-                </div>
-                <div class="register-field">
-                    <label>Reference 2 - Name</label>
-                    <input type="text" name="reference2_name" value="<?= e($resident["reference2_name"]) ?>">
-                </div>
-                <div class="register-field">
-                    <label>Reference 2 - Signature</label>
-                    <input type="text" name="reference2_signature" value="<?= e($resident["reference2_signature"]) ?>" placeholder="Optional">
-                </div>
-            </div>
-
-            <button type="submit" style="margin-top:20px;">Save Changes</button>
-            <a href="resident_management.php" class="btn btn-secondary">Cancel</a>
-        </form>
-    </div>
-
-    <div class="card">
-        <h2>Children</h2>
-        <?php if ($child_error): ?><div class="error"><?= e($child_error) ?></div><?php endif; ?>
-        <div class="table-scroll">
-        <table>
-            <tr><th>Child Name</th><th>Age</th><th>Action</th></tr>
-            <?php if ($children->num_rows === 0): ?>
-            <tr><td colspan="3" style="text-align:center; color:#889;">No children on record.</td></tr>
-            <?php else: $children->data_seek(0); while ($c = $children->fetch_assoc()): ?>
-            <tr>
-                <td><?= e($c["child_name"]) ?></td>
-                <td><?= $c["age"] !== null ? e($c["age"]) : "&mdash;" ?></td>
-                <td>
-                    <a href="resident_edit.php?resident_id=<?= $resident_id ?>&delete_child=<?= (int)$c["child_id"] ?>" class="btn btn-sm btn-danger"
-                       onclick="return confirm('Remove <?= e(addslashes($c['child_name'])) ?>?');">Remove</a>
-                </td>
-            </tr>
-            <?php endwhile; endif; ?>
-        </table>
-        </div>
-
-        <form method="POST" class="children-add-row">
-            <input type="hidden" name="add_child" value="1">
-            <input type="hidden" name="resident_id" value="<?= $resident_id ?>">
-            <div class="register-field">
-                <label>Child Name</label>
-                <input type="text" name="child_name" placeholder="Full name" required>
-            </div>
-            <div class="register-field age-field">
-                <label>Age</label>
-                <input type="number" name="child_age" min="0" max="120">
-            </div>
-            <button type="submit" class="btn btn-sm">+ Add Child</button>
-        </form>
-    </div>
-</div>
-<script src="../assets/js/script.js"></script>
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-    const birthdayInput = document.getElementById("birthdayInput");
-    const ageDisplay = document.getElementById("ageDisplay");
-    function recomputeAge() {
-        if (!birthdayInput.value) { ageDisplay.value = ""; return; }
-        const b = new Date(birthdayInput.value);
-        const today = new Date();
-        let age = today.getFullYear() - b.getFullYear();
-        const m = today.getMonth() - b.getMonth();
-        if (m < 0 || (m === 0 && today.getDate() < b.getDate())) age--;
-        ageDisplay.value = age >= 0 ? age : "";
+
+(function(){
+
+    var t =
+        localStorage.getItem(
+            "theme"
+        );
+
+
+    if (
+        t === "dark"
+    ) {
+
+        document.documentElement.setAttribute(
+            "data-theme",
+            "dark"
+        );
+
     }
-    if (birthdayInput) birthdayInput.addEventListener("change", recomputeAge);
-});
+
+})();
+
 </script>
+
+
+<script>
+
+(function(){
+
+    try {
+
+        if (
+            localStorage.getItem(
+                "sidebarCollapsed"
+            )
+            ===
+            "true"
+        ) {
+
+            document.documentElement.setAttribute(
+                "data-sidebar",
+                "collapsed"
+            );
+
+        }
+
+    }
+    catch(e) {}
+
+})();
+
+</script>
+
+</head>
+
+
+<body>
+
+
+<?php
+
+include __DIR__ . "/../includes/staff_nav.php";
+
+?>
+
+
+<div class="container">
+
+
+<?php
+
+include __DIR__ . "/../includes/staff_topbar.php";
+
+?>
+
+
+<!-- =========================================================
+     HEADER
+     ========================================================= -->
+
+<div class="welcome-header">
+
+    <div>
+
+        <h1>
+            Edit Resident
+        </h1>
+
+
+        <p>
+
+            <?= e(
+                full_resident_name(
+                    $resident
+                )
+            ) ?>
+
+            &middot;
+
+            <?= e(
+                $resident[
+                    "resident_number"
+                ]
+            ) ?>
+
+        </p>
+
+    </div>
+
+
+    <div class="table-actions">
+
+        <a
+            class="btn btn-secondary"
+            href="resident_view.php?resident_id=<?= $resident_id ?>"
+        >
+            View / Print
+        </a>
+
+
+        <a
+            class="btn btn-secondary"
+            href="resident_management.php"
+        >
+            Back to List
+        </a>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     PROFILE PHOTO
+     ========================================================= -->
+
+<div class="card">
+
+    <h2>
+        Profile Photo
+    </h2>
+
+
+    <?php if (
+        $photo_error
+    ): ?>
+
+        <div class="error">
+
+            <?= e(
+                $photo_error
+            ) ?>
+
+        </div>
+
+    <?php endif; ?>
+
+
+    <form
+        method="POST"
+        enctype="multipart/form-data"
+        class="photo-uploader"
+    >
+
+        <input
+            type="hidden"
+            name="upload_photo"
+            value="1"
+        >
+
+
+        <input
+            type="hidden"
+            name="resident_id"
+            value="<?= $resident_id ?>"
+        >
+
+
+        <div class="avatar-lg">
+
+            <?php if (
+                $photo_url
+            ): ?>
+
+                <img
+                    src="<?= e(
+                        $photo_url
+                    ) ?>"
+                    alt="Resident photo"
+                >
+
+            <?php else: ?>
+
+                <?= e(
+                    $initials
+                ) ?>
+
+            <?php endif; ?>
+
+        </div>
+
+
+        <div>
+
+            <input
+                type="file"
+                name="photo"
+                accept="image/png, image/jpeg, image/webp"
+            >
+
+
+            <p
+                style="
+                    font-size:12px;
+                    color:#667;
+                    margin:6px 0 0;
+                "
+            >
+                Passport-size photo.
+                JPG, PNG, or WEBP, up to 3MB.
+            </p>
+
+
+            <button
+                type="submit"
+                class="btn btn-sm"
+                style="margin-top:10px;"
+            >
+                Upload Photo
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+<!-- =========================================================
+     RESIDENT INFORMATION
+     ========================================================= -->
+
+<div class="card">
+
+    <h2>
+        Resident Information
+    </h2>
+
+
+    <?php if (
+        $success
+    ): ?>
+
+        <div class="success">
+
+            <?= e(
+                $success
+            ) ?>
+
+        </div>
+
+    <?php endif; ?>
+
+
+    <?php if (
+        $error
+    ): ?>
+
+        <div class="error">
+
+            <?= e(
+                $error
+            ) ?>
+
+        </div>
+
+    <?php endif; ?>
+
+
+    <form
+        method="POST"
+    >
+
+        <input
+            type="hidden"
+            name="update_resident"
+            value="1"
+        >
+
+
+        <input
+            type="hidden"
+            name="resident_id"
+            value="<?= $resident_id ?>"
+        >
+
+
+        <!-- =================================================
+             PERSONAL INFORMATION
+             ================================================= -->
+
+        <div class="form-section-title">
+            Personal Information
+        </div>
+
+
+        <div class="field-grid-2">
+
+
+            <div class="register-field">
+
+                <label>
+                    Resident Number
+                </label>
+
+
+                <input
+                    type="text"
+                    name="resident_number"
+                    required
+                    value="<?= e(
+                        $resident[
+                            "resident_number"
+                        ]
+                    ) ?>"
+                >
+
+            </div>
+
+
+            <div class="register-field">
+
+                <label>
+                    Civil Status
+                </label>
+
+
+                <select
+                    name="civil_status"
+                >
+
+                    <option value="">
+                        -- Select --
+                    </option>
+
+
+                    <?php foreach (
+                        $civil_statuses
+                        as $cs
+                    ): ?>
+
+                        <option
+                            value="<?= e($cs) ?>"
+                            <?= (
+                                $resident[
+                                    "civil_status"
+                                ]
+                                ===
+                                $cs
+                            )
+                                ? "selected"
+                                : ""
+                            ?>
+                        >
+
+                            <?= e(
+                                $cs
+                            ) ?>
+
+                        </option>
+
+                    <?php endforeach; ?>
+
+                </select>
+
+            </div>
+
+
+            <div class="register-field">
+
+                <label>
+                    First Name
+                </label>
+
+
+                <input
+                    type="text"
+                    name="first_name"
+                    required
+                    value="<?= e(
+                        $resident[
+                            "first_name"
+                        ]
+                    ) ?>"
+                >
+
+            </div>
+
+
+            <div class="register-field">
+
+                <label>
+                    Middle Name
+                </label>
+
+
+                <input
+                    type="text"
+                    name="middle_name"
+                    value="<?= e(
+                        $resident[
+                            "middle_name"
+                        ]
+                    ) ?>"
+                >
+
+            </div>
+
+
+            <div class="register-field">
+
+                <label>
+                    Last Name
+                </label>
+
+
+                <input
+                    type="text"
+                    name="last_name"
+                    required
+                    value="<?= e(
+                        $resident[
+                            "last_name"
+                        ]
+                    ) ?>"
+                >
+
+            </div>
+
+
+            <div class="register-field">
+
+                <label>
+                    Extension Name
+                </label>
+
+
+                <input
+                    type="text"
+                    name="extension_name"
+                    value="<?= e(
+                        $resident[
+                            "extension_name"
+                        ]
+                    ) ?>"
+                    placeholder="Jr., Sr., III, etc."
+                >
+
+            </div>
+
+
+            <div class="register-field">
+
+                <label>
+                    Email
+                </label>
+
+
+                <input
+                    type="email"
+                    name="email"
+                    value="<?= e(
+                        $resident[
+                            "email"
+                        ]
+                    ) ?>"
+                >
+
+            </div>
+
+
+            <div class="register-field">
+
+                <label>
+                    Contact Number
+                </label>
+
+
+                <input
+                    type="text"
+                    name="contact_number"
+                    maxlength="11"
+                    inputmode="numeric"
+                    value="<?= e(
+                        $resident[
+                            "contact_number"
+                        ]
+                    ) ?>"
+                >
+
+            </div>
+
+
+            <div class="register-field">
+
+                <label>
+                    Birthday
+                </label>
+
+
+                <input
+                    type="date"
+                    name="birthday"
+                    id="birthdayInput"
+                    value="<?= e(
+                        $resident[
+                            "birthday"
+                        ]
+                    ) ?>"
+                    max="<?= date(
+                        "Y-m-d"
+                    ) ?>"
+                >
+
+            </div>
+
+
+            <div class="register-field">
+
+                <label>
+                    Age
+                </label>
+
+
+                <input
+                    type="text"
+                    id="ageDisplay"
+                    value="<?=
+                        $resident["age"] !== null
+                            ? e(
+                                $resident["age"]
+                            )
+                            : ""
+                    ?>"
+                    disabled
+                    placeholder="Auto-computed from birthday"
+                >
+
+            </div>
+
+
+            <div class="register-field">
+
+                <label>
+                    Occupation
+                </label>
+
+
+                <input
+                    type="text"
+                    name="occupation"
+                    value="<?= e(
+                        $resident[
+                            "occupation"
+                        ]
+                    ) ?>"
+                >
+
+            </div>
+
+
+            <div class="register-field">
+
+                <label>
+                    Employer
+                </label>
+
+
+                <input
+                    type="text"
+                    name="employer"
+                    value="<?= e(
+                        $resident[
+                            "employer"
+                        ]
+                    ) ?>"
+                >
+
+            </div>
+
+
+            <div class="register-field span-2">
+
+                <label>
+                    Employer Address
+                </label>
+
+
+                <input
+                    type="text"
+                    name="employer_address"
+                    value="<?= e(
+                        $resident[
+                            "employer_address"
+                        ]
+                    ) ?>"
+                >
+
+            </div>
+
+
+            <div class="register-field span-2">
+
+                <label>
+                    Address
+                </label>
+
+
+                <input
+                    type="text"
+                    name="address"
+                    value="<?= e(
+                        $resident[
+                            "address"
+                        ]
+                    ) ?>"
+                >
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             PARENTS
+             ================================================= -->
+
+        <div class="form-section-title">
+            Parents
+        </div>
+
+
+        <div class="field-grid-2">
+
+
+            <div class="register-field">
+
+                <label>
+                    Father's Name
+                </label>
+
+
+                <input
+                    type="text"
+                    name="father_name"
+                    value="<?= e(
+                        $parents[
+                            "father_name"
+                        ]
+                    ) ?>"
+                >
+
+            </div>
+
+
+            <div class="register-field">
+
+                <label>
+                    Mother's Name
+                </label>
+
+
+                <input
+                    type="text"
+                    name="mother_name"
+                    value="<?= e(
+                        $parents[
+                            "mother_name"
+                        ]
+                    ) ?>"
+                >
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             SPOUSE
+             ================================================= -->
+
+        <div class="form-section-title">
+            Spouse Information
+        </div>
+
+
+        <div class="field-grid-2">
+
+
+            <div class="register-field">
+
+                <label>
+                    Spouse Name
+                </label>
+
+
+                <input
+                    type="text"
+                    name="spouse_name"
+                    value="<?= e(
+                        $spouse[
+                            "spouse_name"
+                        ]
+                    ) ?>"
+                >
+
+            </div>
+
+
+            <div class="register-field">
+
+                <label>
+                    Occupation
+                </label>
+
+
+                <input
+                    type="text"
+                    name="spouse_occupation"
+                    value="<?= e(
+                        $spouse[
+                            "occupation"
+                        ]
+                    ) ?>"
+                >
+
+            </div>
+
+
+            <div class="register-field">
+
+                <label>
+                    Employer
+                </label>
+
+
+                <input
+                    type="text"
+                    name="spouse_employer"
+                    value="<?= e(
+                        $spouse[
+                            "employer"
+                        ]
+                    ) ?>"
+                >
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             CHARACTER REFERENCES
+             ================================================= -->
+
+        <div class="form-section-title">
+            Character References
+        </div>
+
+
+        <div class="field-grid-2">
+
+
+            <div class="register-field">
+
+                <label>
+                    Reference 1 - Name
+                </label>
+
+
+                <input
+                    type="text"
+                    name="reference1_name"
+                    value="<?= e(
+                        $references[0][
+                            "reference_name"
+                        ]
+                        ??
+                        ""
+                    ) ?>"
+                >
+
+            </div>
+
+
+            <div class="register-field">
+
+                <label>
+                    Reference 1 - Signature
+                </label>
+
+
+                <input
+                    type="text"
+                    name="reference1_signature"
+                    value="<?= e(
+                        $references[0][
+                            "signature"
+                        ]
+                        ??
+                        ""
+                    ) ?>"
+                    placeholder="Optional"
+                >
+
+            </div>
+
+
+            <div class="register-field">
+
+                <label>
+                    Reference 2 - Name
+                </label>
+
+
+                <input
+                    type="text"
+                    name="reference2_name"
+                    value="<?= e(
+                        $references[1][
+                            "reference_name"
+                        ]
+                        ??
+                        ""
+                    ) ?>"
+                >
+
+            </div>
+
+
+            <div class="register-field">
+
+                <label>
+                    Reference 2 - Signature
+                </label>
+
+
+                <input
+                    type="text"
+                    name="reference2_signature"
+                    value="<?= e(
+                        $references[1][
+                            "signature"
+                        ]
+                        ??
+                        ""
+                    ) ?>"
+                    placeholder="Optional"
+                >
+
+            </div>
+
+        </div>
+
+
+        <button
+            type="submit"
+            style="margin-top:20px;"
+        >
+            Save Changes
+        </button>
+
+
+        <a
+            href="resident_management.php"
+            class="btn btn-secondary"
+        >
+            Cancel
+        </a>
+
+    </form>
+
+</div>
+
+
+<!-- =========================================================
+     CHILDREN
+     ========================================================= -->
+
+<div class="card">
+
+    <h2>
+        Children
+    </h2>
+
+
+    <?php if (
+        $child_error
+    ): ?>
+
+        <div class="error">
+
+            <?= e(
+                $child_error
+            ) ?>
+
+        </div>
+
+    <?php endif; ?>
+
+
+    <div class="table-scroll">
+
+        <table>
+
+            <tr>
+
+                <th>
+                    Child Name
+                </th>
+
+
+                <th>
+                    Age
+                </th>
+
+
+                <th>
+                    Action
+                </th>
+
+            </tr>
+
+
+            <?php if (
+                count($children) === 0
+            ): ?>
+
+                <tr>
+
+                    <td
+                        colspan="3"
+                        style="
+                            text-align:center;
+                            color:#889;
+                        "
+                    >
+                        No children on record.
+                    </td>
+
+                </tr>
+
+            <?php else: ?>
+
+
+                <?php foreach (
+                    $children
+                    as $c
+                ): ?>
+
+                    <tr>
+
+                        <td>
+
+                            <?= e(
+                                $c[
+                                    "child_name"
+                                ]
+                            ) ?>
+
+                        </td>
+
+
+                        <td>
+
+                            <?=
+                                $c["age"] !== null
+                                    ? e(
+                                        $c["age"]
+                                    )
+                                    : "&mdash;"
+                            ?>
+
+                        </td>
+
+
+                        <td>
+
+                            <a
+                                href="resident_edit.php?resident_id=<?= $resident_id ?>&delete_child=<?= (int)$c["child_id"] ?>"
+                                class="btn btn-sm btn-danger"
+                                onclick="return confirm('Remove this child?');"
+                            >
+                                Remove
+                            </a>
+
+                        </td>
+
+                    </tr>
+
+                <?php endforeach; ?>
+
+
+            <?php endif; ?>
+
+        </table>
+
+    </div>
+
+
+    <form
+        method="POST"
+        class="children-add-row"
+    >
+
+        <input
+            type="hidden"
+            name="add_child"
+            value="1"
+        >
+
+
+        <input
+            type="hidden"
+            name="resident_id"
+            value="<?= $resident_id ?>"
+        >
+
+
+        <div class="register-field">
+
+            <label>
+                Child Name
+            </label>
+
+
+            <input
+                type="text"
+                name="child_name"
+                placeholder="Full name"
+                required
+            >
+
+        </div>
+
+
+        <div class="register-field age-field">
+
+            <label>
+                Age
+            </label>
+
+
+            <input
+                type="number"
+                name="child_age"
+                min="0"
+                max="120"
+            >
+
+        </div>
+
+
+        <button
+            type="submit"
+            class="btn btn-sm"
+        >
+            + Add Child
+        </button>
+
+    </form>
+
+</div>
+
+
+</div>
+
+
+<script src="../assets/js/script.js"></script>
+
+
+<script>
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        const birthdayInput =
+            document.getElementById(
+                "birthdayInput"
+            );
+
+
+        const ageDisplay =
+            document.getElementById(
+                "ageDisplay"
+            );
+
+
+        function recomputeAge() {
+
+            if (
+                !birthdayInput.value
+            ) {
+
+                ageDisplay.value =
+                    "";
+
+                return;
+
+            }
+
+
+            const birthDate =
+                new Date(
+                    birthdayInput.value
+                );
+
+
+            const today =
+                new Date();
+
+
+            let age =
+                today.getFullYear()
+                -
+                birthDate.getFullYear();
+
+
+            const monthDifference =
+                today.getMonth()
+                -
+                birthDate.getMonth();
+
+
+            if (
+                monthDifference < 0
+                ||
+                (
+                    monthDifference === 0
+                    &&
+                    today.getDate()
+                    <
+                    birthDate.getDate()
+                )
+            ) {
+
+                age--;
+
+            }
+
+
+            ageDisplay.value =
+                age >= 0
+                    ? age
+                    : "";
+
+        }
+
+
+        if (
+            birthdayInput
+        ) {
+
+            birthdayInput.addEventListener(
+                "change",
+                recomputeAge
+            );
+
+
+            birthdayInput.addEventListener(
+                "input",
+                recomputeAge
+            );
+
+        }
+
+    }
+);
+
+</script>
+
+
 </body>
+
 </html>

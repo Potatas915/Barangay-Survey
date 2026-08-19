@@ -1,184 +1,1033 @@
 -- =========================================================
--- Barangay Health Center Survey Management System
--- Database Schema
--- Import this file in phpMyAdmin (XAMPP) before running the app
+-- BARANGAY HEALTH CENTER SURVEY MANAGEMENT SYSTEM
+-- COMPLETE DATABASE + RESIDENT UPDATE HISTORY
+--
+-- Includes:
+--   1. Original Barangay Survey database structure
+--   2. Act 5 - Set A resident information fields
+--   3. Resident children
+--   4. Resident update history
+--   5. Before/After change storage
+--   6. Staff / Resident update tracking
+--
+-- IMPORT THIS FILE ONCE IN PHPMYADMIN
+-- =========================================================
+
+
+-- =========================================================
+-- DATABASE
 -- =========================================================
 
 CREATE DATABASE IF NOT EXISTS barangay_survey_db;
+
 USE barangay_survey_db;
 
--- ---------------------------------------------------------
--- Table: residents
--- ---------------------------------------------------------
-CREATE TABLE residents (
+
+-- =========================================================
+-- TABLE: residents
+-- =========================================================
+
+CREATE TABLE IF NOT EXISTS residents (
+
     resident_id INT AUTO_INCREMENT PRIMARY KEY,
+
     resident_number VARCHAR(20) NOT NULL UNIQUE,
+
     first_name VARCHAR(50) NOT NULL,
+
     last_name VARCHAR(50) NOT NULL,
+
     middle_name VARCHAR(50),
+
     extension_name VARCHAR(10),
-    civil_status ENUM('Single','Married','Widowed','Separated','Divorced') DEFAULT NULL,
+
+    civil_status ENUM(
+        'Single',
+        'Married',
+        'Widowed',
+        'Separated',
+        'Divorced'
+    ) DEFAULT NULL,
+
     email VARCHAR(100),
+
     contact_number VARCHAR(20),
+
     address VARCHAR(150),
+
     birthday DATE DEFAULT NULL,
+
     age INT DEFAULT NULL,
+
     occupation VARCHAR(100),
+
     employer VARCHAR(100),
+
     employer_address VARCHAR(150),
+
     father_name VARCHAR(100),
+
     mother_name VARCHAR(100),
+
     spouse_name VARCHAR(100),
+
     spouse_occupation VARCHAR(100),
+
     spouse_employer VARCHAR(100),
+
     reference1_name VARCHAR(100),
+
     reference1_signature VARCHAR(100),
+
     reference2_name VARCHAR(100),
+
     reference2_signature VARCHAR(100),
+
     photo VARCHAR(255) DEFAULT NULL,
+
     password VARCHAR(255) NOT NULL,
+
     is_first_login TINYINT(1) NOT NULL DEFAULT 1,
+
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+
+    updated_at TIMESTAMP
+        DEFAULT CURRENT_TIMESTAMP
+        ON UPDATE CURRENT_TIMESTAMP
+
 );
 
--- ---------------------------------------------------------
--- Table: resident_children
--- A resident can list any number of children (Act 5 - Set A).
--- ---------------------------------------------------------
-CREATE TABLE resident_children (
+
+-- =========================================================
+-- TABLE: resident_children
+-- =========================================================
+
+CREATE TABLE IF NOT EXISTS resident_children (
+
     child_id INT AUTO_INCREMENT PRIMARY KEY,
+
     resident_id INT NOT NULL,
+
     child_name VARCHAR(100) NOT NULL,
+
     age INT DEFAULT NULL,
-    FOREIGN KEY (resident_id) REFERENCES residents(resident_id) ON DELETE CASCADE
+
+    CONSTRAINT fk_resident_children_resident
+
+        FOREIGN KEY (resident_id)
+
+        REFERENCES residents(resident_id)
+
+        ON DELETE CASCADE
+
 );
 
--- ---------------------------------------------------------
--- Table: staff
--- ---------------------------------------------------------
-CREATE TABLE staff (
-    staff_id INT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(50) NOT NULL UNIQUE,
-    full_name VARCHAR(100) NOT NULL,
-    email VARCHAR(100),
-    password VARCHAR(255) NOT NULL,
-    role VARCHAR(30) DEFAULT 'staff',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
 
--- ---------------------------------------------------------
--- Table: surveys
--- ---------------------------------------------------------
-CREATE TABLE surveys (
-    survey_id INT AUTO_INCREMENT PRIMARY KEY,
-    title VARCHAR(150) NOT NULL,
-    description TEXT,
-    created_by INT NOT NULL,
-    start_date DATE NOT NULL,
-    end_date DATE NOT NULL,
-    status ENUM('active','inactive') DEFAULT 'active',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (created_by) REFERENCES staff(staff_id)
-);
+-- =========================================================
+-- TABLE: resident_update_history
+--
+-- This is the important new table.
+--
+-- It stores:
+--
+--   old_data = BEFORE
+--   new_data = AFTER
+--
+-- So the application can display:
+--
+--   BEFORE                  AFTER
+--   --------------------   --------------------
+--   Middle Name: Cruz       Middle Name: Santos
+--   Occupation: Driver      Occupation: Engineer
+--
+-- =========================================================
 
--- ---------------------------------------------------------
--- Table: survey_questions
--- ---------------------------------------------------------
-CREATE TABLE survey_questions (
-    question_id INT AUTO_INCREMENT PRIMARY KEY,
-    survey_id INT NOT NULL,
-    question_text VARCHAR(255) NOT NULL,
-    question_type ENUM('multiple_choice','yes_no','rating','short_answer') NOT NULL,
-    is_required TINYINT(1) DEFAULT 1,
-    question_order INT DEFAULT 0,
-    FOREIGN KEY (survey_id) REFERENCES surveys(survey_id) ON DELETE CASCADE
-);
+CREATE TABLE IF NOT EXISTS resident_update_history (
 
--- ---------------------------------------------------------
--- Table: survey_choices (used for multiple_choice and rating questions)
--- ---------------------------------------------------------
-CREATE TABLE survey_choices (
-    choice_id INT AUTO_INCREMENT PRIMARY KEY,
-    question_id INT NOT NULL,
-    choice_text VARCHAR(150) NOT NULL,
-    choice_order INT DEFAULT 0,
-    FOREIGN KEY (question_id) REFERENCES survey_questions(question_id) ON DELETE CASCADE
-);
+    history_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
 
--- ---------------------------------------------------------
--- Table: responses (one row per resident submission of a survey)
--- ---------------------------------------------------------
-CREATE TABLE responses (
-    response_id INT AUTO_INCREMENT PRIMARY KEY,
-    survey_id INT NOT NULL,
     resident_id INT NOT NULL,
-    resident_name VARCHAR(100) NOT NULL,
-    submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (survey_id) REFERENCES surveys(survey_id) ON DELETE CASCADE,
-    FOREIGN KEY (resident_id) REFERENCES residents(resident_id) ON DELETE CASCADE,
-    UNIQUE KEY unique_submission (survey_id, resident_id)
+
+    updated_by_type ENUM(
+        'resident',
+        'staff'
+    ) NOT NULL,
+
+    updated_by_id INT DEFAULT NULL,
+
+    update_section VARCHAR(100) NOT NULL,
+
+    old_data LONGTEXT DEFAULT NULL,
+
+    new_data LONGTEXT DEFAULT NULL,
+
+    updated_at TIMESTAMP NOT NULL
+        DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (history_id),
+
+    INDEX idx_history_resident_id (
+        resident_id
+    ),
+
+    INDEX idx_history_updated_at (
+        updated_at
+    ),
+
+    INDEX idx_history_updated_by (
+        updated_by_type,
+        updated_by_id
+    ),
+
+    CONSTRAINT fk_resident_update_history_resident
+
+        FOREIGN KEY (resident_id)
+
+        REFERENCES residents(resident_id)
+
+        ON DELETE CASCADE
+
+        ON UPDATE CASCADE
+
 );
 
--- ---------------------------------------------------------
--- Table: survey_results (individual answers within a response)
--- ---------------------------------------------------------
-CREATE TABLE survey_results (
-    result_id INT AUTO_INCREMENT PRIMARY KEY,
-    response_id INT NOT NULL,
+
+-- =========================================================
+-- TABLE: staff
+-- =========================================================
+
+CREATE TABLE IF NOT EXISTS staff (
+
+    staff_id INT AUTO_INCREMENT PRIMARY KEY,
+
+    username VARCHAR(50) NOT NULL UNIQUE,
+
+    full_name VARCHAR(100) NOT NULL,
+
+    email VARCHAR(100),
+
+    password VARCHAR(255) NOT NULL,
+
+    role VARCHAR(30) DEFAULT 'staff',
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+);
+
+
+-- =========================================================
+-- TABLE: surveys
+-- =========================================================
+
+CREATE TABLE IF NOT EXISTS surveys (
+
+    survey_id INT AUTO_INCREMENT PRIMARY KEY,
+
+    title VARCHAR(150) NOT NULL,
+
+    description TEXT,
+
+    created_by INT NOT NULL,
+
+    start_date DATE NOT NULL,
+
+    end_date DATE NOT NULL,
+
+    status ENUM(
+        'active',
+        'inactive'
+    ) DEFAULT 'active',
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_surveys_staff
+
+        FOREIGN KEY (created_by)
+
+        REFERENCES staff(staff_id)
+
+);
+
+
+-- =========================================================
+-- TABLE: survey_questions
+-- =========================================================
+
+CREATE TABLE IF NOT EXISTS survey_questions (
+
+    question_id INT AUTO_INCREMENT PRIMARY KEY,
+
+    survey_id INT NOT NULL,
+
+    question_text VARCHAR(255) NOT NULL,
+
+    question_type ENUM(
+        'multiple_choice',
+        'yes_no',
+        'rating',
+        'short_answer'
+    ) NOT NULL,
+
+    is_required TINYINT(1) DEFAULT 1,
+
+    question_order INT DEFAULT 0,
+
+    CONSTRAINT fk_questions_survey
+
+        FOREIGN KEY (survey_id)
+
+        REFERENCES surveys(survey_id)
+
+        ON DELETE CASCADE
+
+);
+
+
+-- =========================================================
+-- TABLE: survey_choices
+-- =========================================================
+
+CREATE TABLE IF NOT EXISTS survey_choices (
+
+    choice_id INT AUTO_INCREMENT PRIMARY KEY,
+
     question_id INT NOT NULL,
+
+    choice_text VARCHAR(150) NOT NULL,
+
+    choice_order INT DEFAULT 0,
+
+    CONSTRAINT fk_choices_question
+
+        FOREIGN KEY (question_id)
+
+        REFERENCES survey_questions(question_id)
+
+        ON DELETE CASCADE
+
+);
+
+
+-- =========================================================
+-- TABLE: responses
+-- =========================================================
+
+CREATE TABLE IF NOT EXISTS responses (
+
+    response_id INT AUTO_INCREMENT PRIMARY KEY,
+
+    survey_id INT NOT NULL,
+
+    resident_id INT NOT NULL,
+
+    resident_name VARCHAR(100) NOT NULL,
+
+    submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_responses_survey
+
+        FOREIGN KEY (survey_id)
+
+        REFERENCES surveys(survey_id)
+
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_responses_resident
+
+        FOREIGN KEY (resident_id)
+
+        REFERENCES residents(resident_id)
+
+        ON DELETE CASCADE,
+
+    UNIQUE KEY unique_submission (
+        survey_id,
+        resident_id
+    )
+
+);
+
+
+-- =========================================================
+-- TABLE: survey_results
+-- =========================================================
+
+CREATE TABLE IF NOT EXISTS survey_results (
+
+    result_id INT AUTO_INCREMENT PRIMARY KEY,
+
+    response_id INT NOT NULL,
+
+    question_id INT NOT NULL,
+
     choice_id INT NULL,
+
     answer_text VARCHAR(255) NULL,
-    FOREIGN KEY (response_id) REFERENCES responses(response_id) ON DELETE CASCADE,
-    FOREIGN KEY (question_id) REFERENCES survey_questions(question_id) ON DELETE CASCADE,
-    FOREIGN KEY (choice_id) REFERENCES survey_choices(choice_id) ON DELETE SET NULL
+
+    CONSTRAINT fk_results_response
+
+        FOREIGN KEY (response_id)
+
+        REFERENCES responses(response_id)
+
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_results_question
+
+        FOREIGN KEY (question_id)
+
+        REFERENCES survey_questions(question_id)
+
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_results_choice
+
+        FOREIGN KEY (choice_id)
+
+        REFERENCES survey_choices(choice_id)
+
+        ON DELETE SET NULL
+
 );
 
--- ---------------------------------------------------------
--- Table: login_history (optional)
--- ---------------------------------------------------------
-CREATE TABLE login_history (
+
+-- =========================================================
+-- TABLE: login_history
+-- =========================================================
+
+CREATE TABLE IF NOT EXISTS login_history (
+
     log_id INT AUTO_INCREMENT PRIMARY KEY,
-    user_type ENUM('resident','staff') NOT NULL,
+
+    user_type ENUM(
+        'resident',
+        'staff'
+    ) NOT NULL,
+
     user_id INT NOT NULL,
+
     login_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
 );
 
--- ---------------------------------------------------------
--- Sample data so the group can log in and test right away
--- Default staff account: username = admin, password = admin123
--- Default resident accounts: default password for each = their own resident number
--- Passwords below are already hashed with PHP password_hash()
--- ---------------------------------------------------------
 
-INSERT INTO staff (username, full_name, email, password, role) VALUES
-('admin', 'Barangay Health Staff', 'staff@example.com', '$2b$10$mF8MNjFO6F1s.nbadeDc5.h9teXtBeuSGv2zBWKOH/.3AKQPksCsm', 'admin');
+-- =========================================================
+-- SAMPLE STAFF ACCOUNT
+-- =========================================================
+--
+-- Only insert the sample account if it doesn't already exist.
+--
+-- Username:
+--     admin
+--
+-- Password:
+--     admin123
+--
+-- =========================================================
 
-INSERT INTO residents (resident_number, first_name, last_name, email, contact_number, address, password, is_first_login) VALUES
-('2026-0001', 'Justin Lian', 'Enriquez', 'lianjustin91@gmail.com', '09752509652', 'Sulucan, Bocaue, Bulacan', '$2b$10$mGrOfVoC0/ORly7Z4iHH0OPlksjcOmNqPP9hh4vkrXXPJnQfq4LMm', 1),
-('2026-0002', 'Cielo Marie', 'Estolloso', 'cieloestolloso09@gmail.com', '09763008362', 'Iba-Ibayo, Hagonoy, Bulacan', '$2b$10$Vd25nNypemf8GlUJX.pAsehs9fdQUS/7oZvtBEyU7dleDslVSinpe', 1),
-('2026-0003', 'Mary Pauleen', 'Salvador', 'pauleensalvador@gmail.com', '09690640080', 'Malolos, Bulacan', '$2b$10$wz1gKG5NezDiO9kCo3cMveQBx1ju78z7M4plgT349Uuazy9oa.Tr.', 1),
-('2026-0004', 'Kylie Denise', 'Marasigan', 'kyliedenise12@gmail.com', '09235476895', 'San Isidro 1, Paombong, Bulacan', '$2b$10$Va7OVF/mb56F6KFD99w5FegKMXJd3g51ohmsvz12JI2AJdqnhN0hu', 1),
-('2026-0005', 'Aaron Gabriel', 'Ranes', 'aarongabrielranes@gmail.com', '09690924629', 'Malis, Guiguinto, Bulacan', '$2b$10$qPNa1js1imq7pYTuQF2AluEX3BwQRYr5BXeZfaAiJbzR55z8.vrw2', 1);
+INSERT INTO staff (
+    username,
+    full_name,
+    email,
+    password,
+    role
+)
 
-INSERT INTO surveys (title, description, created_by, start_date, end_date, status) VALUES
-('Barangay Health Services Feedback', 'Help us improve our health services by answering this short survey.', 1, '2026-07-01', '2026-12-31', 'active');
+SELECT
+    'admin',
+    'Barangay Health Staff',
+    'staff@example.com',
+    '$2b$10$mF8MNjFO6F1s.nbadeDc5.h9teXtBeuSGv2zBWKOH/.3AKQPksCsm',
+    'admin'
 
-INSERT INTO survey_questions (survey_id, question_text, question_type, is_required, question_order) VALUES
-(1, 'How satisfied are you with the health center services?', 'rating', 1, 1),
-(1, 'Have you availed of a free check-up in the past 6 months?', 'yes_no', 1, 2),
-(1, 'Which service do you use most often?', 'multiple_choice', 1, 3),
-(1, 'Any suggestions to improve our services?', 'short_answer', 0, 4);
+WHERE NOT EXISTS (
 
-INSERT INTO survey_choices (question_id, choice_text, choice_order) VALUES
-(1, '1 - Very Dissatisfied', 1),
-(1, '2 - Dissatisfied', 2),
-(1, '3 - Neutral', 3),
-(1, '4 - Satisfied', 4),
-(1, '5 - Very Satisfied', 5),
-(2, 'Yes', 1),
-(2, 'No', 2),
-(3, 'Consultation', 1),
-(3, 'Vaccination', 2),
-(3, 'Dental Checkup', 3),
-(3, 'Maternal Care', 4);
+    SELECT 1
+    FROM staff
+    WHERE username = 'admin'
+
+);
+
+
+-- =========================================================
+-- SAMPLE RESIDENTS
+-- =========================================================
+--
+-- These are inserted only when their resident number
+-- does not already exist.
+--
+-- =========================================================
+
+INSERT INTO residents (
+    resident_number,
+    first_name,
+    last_name,
+    email,
+    contact_number,
+    address,
+    password,
+    is_first_login
+)
+
+SELECT
+    '2026-0001',
+    'Justin Lian',
+    'Enriquez',
+    'lianjustin91@gmail.com',
+    '09752509652',
+    'Sulucan, Bocaue, Bulacan',
+    '$2b$10$mGrOfVoC0/ORly7Z4iHH0OPlksjcOmNqPP9hh4vkrXXPJnQfq4LMm',
+    1
+
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM residents
+    WHERE resident_number = '2026-0001'
+);
+
+
+INSERT INTO residents (
+    resident_number,
+    first_name,
+    last_name,
+    email,
+    contact_number,
+    address,
+    password,
+    is_first_login
+)
+
+SELECT
+    '2026-0002',
+    'Cielo Marie',
+    'Estolloso',
+    'cieloestolloso09@gmail.com',
+    '09763008362',
+    'Iba-Ibayo, Hagonoy, Bulacan',
+    '$2b$10$Vd25nNypemf8GlUJX.pAsehs9fdQUS/7oZvtBEyU7dleDslVSinpe',
+    1
+
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM residents
+    WHERE resident_number = '2026-0002'
+);
+
+
+INSERT INTO residents (
+    resident_number,
+    first_name,
+    last_name,
+    email,
+    contact_number,
+    address,
+    password,
+    is_first_login
+)
+
+SELECT
+    '2026-0003',
+    'Mary Pauleen',
+    'Salvador',
+    'pauleensalvador@gmail.com',
+    '09690640080',
+    'Malolos, Bulacan',
+    '$2b$10$wz1gKG5NezDiO9kCo3cMveQBx1ju78z7M4plgT349Uuazy9oa.Tr.',
+    1
+
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM residents
+    WHERE resident_number = '2026-0003'
+);
+
+
+INSERT INTO residents (
+    resident_number,
+    first_name,
+    last_name,
+    email,
+    contact_number,
+    address,
+    password,
+    is_first_login
+)
+
+SELECT
+    '2026-0004',
+    'Kylie Denise',
+    'Marasigan',
+    'kyliedenise12@gmail.com',
+    '09235476895',
+    'San Isidro 1, Paombong, Bulacan',
+    '$2b$10$Va7OVF/mb56F6KFD99w5FegKMXJd3g51ohmsvz12JI2AJdqnhN0hu',
+    1
+
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM residents
+    WHERE resident_number = '2026-0004'
+);
+
+
+INSERT INTO residents (
+    resident_number,
+    first_name,
+    last_name,
+    email,
+    contact_number,
+    address,
+    password,
+    is_first_login
+)
+
+SELECT
+    '2026-0005',
+    'Aaron Gabriel',
+    'Ranes',
+    'aarongabrielranes@gmail.com',
+    '09690924629',
+    'Malis, Guiguinto, Bulacan',
+    '$2b$10$qPNa1js1imq7pYTuQF2AluEX3BwQRYr5BXeZfaAiJbzR55z8.vrw2',
+    1
+
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM residents
+    WHERE resident_number = '2026-0005'
+);
+
+
+-- =========================================================
+-- SAMPLE SURVEY
+-- =========================================================
+
+INSERT INTO surveys (
+    title,
+    description,
+    created_by,
+    start_date,
+    end_date,
+    status
+)
+
+SELECT
+    'Barangay Health Services Feedback',
+    'Help us improve our health services by answering this short survey.',
+    1,
+    '2026-07-01',
+    '2026-12-31',
+    'active'
+
+WHERE NOT EXISTS (
+
+    SELECT 1
+    FROM surveys
+    WHERE title = 'Barangay Health Services Feedback'
+
+);
+
+
+-- =========================================================
+-- SAMPLE QUESTIONS
+-- =========================================================
+
+INSERT INTO survey_questions (
+    survey_id,
+    question_text,
+    question_type,
+    is_required,
+    question_order
+)
+
+SELECT
+    survey_id,
+    'How satisfied are you with the health center services?',
+    'rating',
+    1,
+    1
+
+FROM surveys
+
+WHERE title = 'Barangay Health Services Feedback'
+
+AND NOT EXISTS (
+
+    SELECT 1
+    FROM survey_questions q
+    WHERE q.survey_id = surveys.survey_id
+    AND q.question_order = 1
+
+);
+
+
+INSERT INTO survey_questions (
+    survey_id,
+    question_text,
+    question_type,
+    is_required,
+    question_order
+)
+
+SELECT
+    survey_id,
+    'Have you availed of a free check-up in the past 6 months?',
+    'yes_no',
+    1,
+    2
+
+FROM surveys
+
+WHERE title = 'Barangay Health Services Feedback'
+
+AND NOT EXISTS (
+
+    SELECT 1
+    FROM survey_questions q
+    WHERE q.survey_id = surveys.survey_id
+    AND q.question_order = 2
+
+);
+
+
+INSERT INTO survey_questions (
+    survey_id,
+    question_text,
+    question_type,
+    is_required,
+    question_order
+)
+
+SELECT
+    survey_id,
+    'Which service do you use most often?',
+    'multiple_choice',
+    1,
+    3
+
+FROM surveys
+
+WHERE title = 'Barangay Health Services Feedback'
+
+AND NOT EXISTS (
+
+    SELECT 1
+    FROM survey_questions q
+    WHERE q.survey_id = surveys.survey_id
+    AND q.question_order = 3
+
+);
+
+
+INSERT INTO survey_questions (
+    survey_id,
+    question_text,
+    question_type,
+    is_required,
+    question_order
+)
+
+SELECT
+    survey_id,
+    'Any suggestions to improve our services?',
+    'short_answer',
+    0,
+    4
+
+FROM surveys
+
+WHERE title = 'Barangay Health Services Feedback'
+
+AND NOT EXISTS (
+
+    SELECT 1
+    FROM survey_questions q
+    WHERE q.survey_id = surveys.survey_id
+    AND q.question_order = 4
+
+);
+
+
+-- =========================================================
+-- SAMPLE SURVEY CHOICES
+-- =========================================================
+
+INSERT INTO survey_choices (
+    question_id,
+    choice_text,
+    choice_order
+)
+
+SELECT
+    question_id,
+    '1 - Very Dissatisfied',
+    1
+
+FROM survey_questions
+
+WHERE question_text =
+    'How satisfied are you with the health center services?'
+
+AND NOT EXISTS (
+    SELECT 1
+    FROM survey_choices sc
+    WHERE sc.question_id = survey_questions.question_id
+);
+
+
+INSERT INTO survey_choices (
+    question_id,
+    choice_text,
+    choice_order
+)
+
+SELECT
+    question_id,
+    '2 - Dissatisfied',
+    2
+
+FROM survey_questions
+
+WHERE question_text =
+    'How satisfied are you with the health center services?'
+
+AND NOT EXISTS (
+    SELECT 1
+    FROM survey_choices sc
+    WHERE sc.question_id = survey_questions.question_id
+    AND sc.choice_order = 2
+);
+
+
+INSERT INTO survey_choices (
+    question_id,
+    choice_text,
+    choice_order
+)
+
+SELECT
+    question_id,
+    '3 - Neutral',
+    3
+
+FROM survey_questions
+
+WHERE question_text =
+    'How satisfied are you with the health center services?'
+
+AND NOT EXISTS (
+    SELECT 1
+    FROM survey_choices sc
+    WHERE sc.question_id = survey_questions.question_id
+    AND sc.choice_order = 3
+);
+
+
+INSERT INTO survey_choices (
+    question_id,
+    choice_text,
+    choice_order
+)
+
+SELECT
+    question_id,
+    '4 - Satisfied',
+    4
+
+FROM survey_questions
+
+WHERE question_text =
+    'How satisfied are you with the health center services?'
+
+AND NOT EXISTS (
+    SELECT 1
+    FROM survey_choices sc
+    WHERE sc.question_id = survey_questions.question_id
+    AND sc.choice_order = 4
+);
+
+
+INSERT INTO survey_choices (
+    question_id,
+    choice_text,
+    choice_order
+)
+
+SELECT
+    question_id,
+    '5 - Very Satisfied',
+    5
+
+FROM survey_questions
+
+WHERE question_text =
+    'How satisfied are you with the health center services?'
+
+AND NOT EXISTS (
+    SELECT 1
+    FROM survey_choices sc
+    WHERE sc.question_id = survey_questions.question_id
+    AND sc.choice_order = 5
+);
+
+
+INSERT INTO survey_choices (
+    question_id,
+    choice_text,
+    choice_order
+)
+
+SELECT
+    question_id,
+    'Yes',
+    1
+
+FROM survey_questions
+
+WHERE question_text =
+    'Have you availed of a free check-up in the past 6 months?'
+
+AND NOT EXISTS (
+    SELECT 1
+    FROM survey_choices sc
+    WHERE sc.question_id = survey_questions.question_id
+);
+
+
+INSERT INTO survey_choices (
+    question_id,
+    choice_text,
+    choice_order
+)
+
+SELECT
+    question_id,
+    'No',
+    2
+
+FROM survey_questions
+
+WHERE question_text =
+    'Have you availed of a free check-up in the past 6 months?'
+
+AND NOT EXISTS (
+    SELECT 1
+    FROM survey_choices sc
+    WHERE sc.question_id = survey_questions.question_id
+    AND sc.choice_order = 2
+);
+
+
+INSERT INTO survey_choices (
+    question_id,
+    choice_text,
+    choice_order
+)
+
+SELECT
+    question_id,
+    'Consultation',
+    1
+
+FROM survey_questions
+
+WHERE question_text =
+    'Which service do you use most often?'
+
+AND NOT EXISTS (
+    SELECT 1
+    FROM survey_choices sc
+    WHERE sc.question_id = survey_questions.question_id
+);
+
+
+INSERT INTO survey_choices (
+    question_id,
+    choice_text,
+    choice_order
+)
+
+SELECT
+    question_id,
+    'Vaccination',
+    2
+
+FROM survey_questions
+
+WHERE question_text =
+    'Which service do you use most often?'
+
+AND NOT EXISTS (
+    SELECT 1
+    FROM survey_choices sc
+    WHERE sc.question_id = survey_questions.question_id
+    AND sc.choice_order = 2
+);
+
+
+INSERT INTO survey_choices (
+    question_id,
+    choice_text,
+    choice_order
+)
+
+SELECT
+    question_id,
+    'Dental Checkup',
+    3
+
+FROM survey_questions
+
+WHERE question_text =
+    'Which service do you use most often?'
+
+AND NOT EXISTS (
+    SELECT 1
+    FROM survey_choices sc
+    WHERE sc.question_id = survey_questions.question_id
+    AND sc.choice_order = 3
+);
+
+
+INSERT INTO survey_choices (
+    question_id,
+    choice_text,
+    choice_order
+)
+
+SELECT
+    question_id,
+    'Maternal Care',
+    4
+
+FROM survey_questions
+
+WHERE question_text =
+    'Which service do you use most often?'
+
+AND NOT EXISTS (
+    SELECT 1
+    FROM survey_choices sc
+    WHERE sc.question_id = survey_questions.question_id
+    AND sc.choice_order = 4
+);
+
+
+-- =========================================================
+-- VERIFICATION
+-- =========================================================
+
+SELECT
+    'resident_update_history table created successfully'
+    AS status;
+
+DESCRIBE resident_update_history;
+
+SELECT
+    COUNT(*) AS history_records
+FROM resident_update_history;
+
+
+-- =========================================================
+-- END
+-- =========================================================
