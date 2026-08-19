@@ -8,6 +8,15 @@ $reports = $conn->query("
     (SELECT COUNT(*) FROM survey_questions q WHERE q.survey_id = s.survey_id) AS question_count
     FROM surveys s ORDER BY s.created_at DESC
 ");
+
+// Resident report summary (Act 5 - Set A)
+$total_residents = $conn->query("SELECT COUNT(*) AS c FROM residents")->fetch_assoc()["c"];
+$updated_residents = $conn->query("SELECT COUNT(*) AS c FROM residents WHERE updated_at > created_at")->fetch_assoc()["c"];
+$with_photo = $conn->query("SELECT COUNT(*) AS c FROM residents WHERE photo IS NOT NULL AND photo != ''")->fetch_assoc()["c"];
+$civil_status_breakdown = $conn->query("
+    SELECT COALESCE(NULLIF(civil_status,''), 'Not specified') AS status_label, COUNT(*) AS c
+    FROM residents GROUP BY status_label ORDER BY c DESC
+");
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -48,6 +57,33 @@ $reports = $conn->query("
                 <td class="no-print"><a class="btn btn-reports"  href="results.php?survey_id=<?= $r["survey_id"] ?>">View</a></td>
 
 
+            </tr>
+            <?php endwhile; ?>
+        </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h2>Resident Report</h2>
+            <div class="table-actions no-print">
+                <a class="btn btn-sm btn-secondary" href="resident_export.php">Export CSV</a>
+                <button class="btn btn-sm" onclick="window.print()">Print / Export as PDF</button>
+            </div>
+        </div>
+        <p style="font-size:13px; color:#667;">Snapshot of resident records currently stored in the system.</p>
+        <div class="print-info-grid" style="margin-bottom:14px;">
+            <div class="info-row"><strong>Total Registered Residents</strong><span><?= (int)$total_residents ?></span></div>
+            <div class="info-row"><strong>Records Updated At Least Once</strong><span><?= (int)$updated_residents ?></span></div>
+            <div class="info-row"><strong>Residents With Photo On File</strong><span><?= (int)$with_photo ?></span></div>
+        </div>
+        <div class="table-scroll">
+        <table>
+            <tr><th>Civil Status</th><th>Residents</th></tr>
+            <?php while ($cs = $civil_status_breakdown->fetch_assoc()): ?>
+            <tr>
+                <td><?= e($cs["status_label"]) ?></td>
+                <td><?= (int)$cs["c"] ?></td>
             </tr>
             <?php endwhile; ?>
         </table>

@@ -1,844 +1,140 @@
 <?php
-
 require_once __DIR__ . "/../includes/functions.php";
 require_staff_login();
 
+// Reset a resident's password back to their resident number (matches the
+// "default password is also their Resident Number" rule from first login).
+if (isset($_GET["reset_password"])) {
+    $resident_id = (int)$_GET["reset_password"];
+    $stmt = $conn->prepare("SELECT resident_number FROM residents WHERE resident_id = ?");
+    $stmt->bind_param("i", $resident_id);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    if ($row) {
+        $hashed = password_hash($row["resident_number"], PASSWORD_DEFAULT);
+        $update = $conn->prepare("UPDATE residents SET password = ?, is_first_login = 1 WHERE resident_id = ?");
+        $update->bind_param("si", $hashed, $resident_id);
+        $update->execute();
+    }
+    redirect("resident_management.php?reset=1");
+}
 
-/*
-|--------------------------------------------------------------------------
-| Messages
-|--------------------------------------------------------------------------
-*/
+// Delete a resident record entirely (their photo file and children rows
+// are cleaned up too; children cascade automatically via the FK).
+if (isset($_GET["delete"])) {
+    $resident_id = (int)$_GET["delete"];
+    $stmt = $conn->prepare("SELECT photo FROM residents WHERE resident_id = ?");
+    $stmt->bind_param("i", $resident_id);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    if ($row) {
+        delete_resident_photo($row["photo"]);
+        $del = $conn->prepare("DELETE FROM residents WHERE resident_id = ?");
+        $del->bind_param("i", $resident_id);
+        $del->execute();
+    }
+    redirect("resident_management.php?deleted=1");
+}
 
-$success = isset($_GET["success"])
-    ? trim($_GET["success"])
-    : "";
-
-$error = isset($_GET["error"])
-    ? trim($_GET["error"])
-    : "";
-
-
-/*
-|--------------------------------------------------------------------------
-| Search
-|--------------------------------------------------------------------------
-*/
-
-$search = isset($_GET["search"])
-    ? trim($_GET["search"])
-    : "";
-
-
-/*
-|--------------------------------------------------------------------------
-| Load Residents
-|--------------------------------------------------------------------------
-*/
+$search = isset($_GET["search"]) ? trim($_GET["search"]) : "";
 
 if ($search !== "") {
-
     $like = "%" . $search . "%";
-
-    $stmt = $conn->prepare("
-        SELECT
-            resident_id,
-            resident_number,
-            first_name,
-            middle_name,
-            last_name,
-            extension_name,
-            civil_status,
-            birthday,
-            age,
-            occupation,
-            employer,
-            employer_address,
-            email,
-            contact_number,
-            address,
-            photo
-        FROM residents
-        WHERE
-            resident_number LIKE ?
-            OR first_name LIKE ?
-            OR middle_name LIKE ?
-            OR last_name LIKE ?
-            OR extension_name LIKE ?
-            OR email LIKE ?
-            OR contact_number LIKE ?
-        ORDER BY
-            last_name,
-            first_name
-    ");
-
-
-    if (!$stmt) {
-
-        die(
-            "Unable to prepare resident search."
-        );
-
-    }
-
-
-    $stmt->bind_param(
-        "sssssss",
-        $like,
-        $like,
-        $like,
-        $like,
-        $like,
-        $like,
-        $like
-    );
-
-
+    $stmt = $conn->prepare("SELECT resident_id, resident_number, first_name, middle_name, last_name, extension_name, email, contact_number, updated_at FROM residents WHERE resident_number LIKE ? OR first_name LIKE ? OR last_name LIKE ? ORDER BY last_name");
+    $stmt->bind_param("sss", $like, $like, $like);
     $stmt->execute();
-
-    $residents =
-        $stmt->get_result();
-
+    $residents = $stmt->get_result();
+} else {
+    $residents = $conn->query("SELECT resident_id, resident_number, first_name, middle_name, last_name, extension_name, email, contact_number, updated_at FROM residents ORDER BY last_name");
 }
-else {
-
-    $residents = $conn->query("
-        SELECT
-            resident_id,
-            resident_number,
-            first_name,
-            middle_name,
-            last_name,
-            extension_name,
-            civil_status,
-            birthday,
-            age,
-            occupation,
-            employer,
-            employer_address,
-            email,
-            contact_number,
-            address,
-            photo
-        FROM residents
-        ORDER BY
-            last_name,
-            first_name
-    ");
-
-
-    if (!$residents) {
-
-        die(
-            "Unable to load residents."
-        );
-
-    }
-
-}
-
 ?>
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
 <meta charset="UTF-8">
-
-<meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
->
-
-<title>
-    Resident Management
-</title>
-
-
-<link
-    rel="stylesheet"
-    href="../assets/css/style.css?v=<?= filemtime(__DIR__ . "/../assets/css/style.css") ?>"
->
-
-
-<script>
-
-(function () {
-
-    var theme =
-        localStorage.getItem("theme");
-
-    if (theme === "dark") {
-
-        document.documentElement.setAttribute(
-            "data-theme",
-            "dark"
-        );
-
-    }
-
-})();
-
-</script>
-
-
-<script>
-
-(function () {
-
-    try {
-
-        if (
-            localStorage.getItem(
-                "sidebarCollapsed"
-            ) === "true"
-        ) {
-
-            document.documentElement.setAttribute(
-                "data-sidebar",
-                "collapsed"
-            );
-
-        }
-
-    }
-    catch (e) {}
-
-})();
-
-</script>
-
-
-<style>
-
-/*
-|--------------------------------------------------------------------------
-| Resident Management
-|--------------------------------------------------------------------------
-*/
-
-.resident-management-header {
-
-    display: flex;
-
-    justify-content: space-between;
-
-    align-items: center;
-
-    gap: 16px;
-
-    flex-wrap: wrap;
-
-    margin-bottom: 18px;
-
-}
-
-
-.resident-management-header h2 {
-
-    margin: 0;
-
-}
-
-
-.resident-management-actions {
-
-    display: flex;
-
-    align-items: center;
-
-    gap: 10px;
-
-    flex-wrap: wrap;
-
-}
-
-
-.resident-management-actions .btn {
-
-    margin-top: 0;
-
-}
-
-
-.resident-search-form {
-
-    margin-bottom: 16px;
-
-}
-
-
-.resident-action-column {
-
-    min-width: 150px;
-
-    text-align: center;
-
-}
-
-
-.resident-actions {
-
-    display: flex;
-
-    justify-content: center;
-
-    align-items: center;
-
-    gap: 8px;
-
-    flex-wrap: wrap;
-
-}
-
-
-.resident-actions .btn {
-
-    margin-top: 0;
-
-}
-
-
-.delete-resident-form {
-
-    display: inline;
-
-    margin: 0;
-
-}
-
-
-.delete-resident-button {
-
-    margin-top: 0;
-
-    cursor: pointer;
-
-}
-
-
-.edit-resident-btn {
-
-    white-space: nowrap;
-
-}
-
-
-.reset-password-btn {
-
-    white-space: nowrap;
-
-}
-
-
-@media (max-width: 900px) {
-
-    .resident-management-header {
-
-        align-items: flex-start;
-
-    }
-
-    .resident-management-actions {
-
-        width: 100%;
-
-    }
-
-}
-
-</style>
-
+<title>Resident Management</title>
+<link rel="stylesheet" href="../assets/css/style.css?v=<?= filemtime(__DIR__ . "/../assets/css/style.css") ?>">
+<script>(function(){var t=localStorage.getItem("theme");if(t==="dark")document.documentElement.setAttribute("data-theme","dark");})();</script>
+<script>(function(){try{if(localStorage.getItem("sidebarCollapsed")==="true")document.documentElement.setAttribute("data-sidebar","collapsed");}catch(e){}})();</script>
 </head>
-
-
 <body>
-
-
-<?php
-
-include __DIR__ . "/../includes/staff_nav.php";
-
-?>
-
-
+<?php include __DIR__ . "/../includes/staff_nav.php"; ?>
 <div class="container">
-
-
-<?php
-
-include __DIR__ . "/../includes/staff_topbar.php";
-
-?>
-
-
-<div class="card card-resident">
-
-
-    <div class="resident-management-header">
-
-
-        <h2>
-            Registered Residents
-        </h2>
-
-
-        <div
-            class="resident-management-actions"
-        >
-
-
-            <!--
-            ----------------------------------------------------------
-            REGISTER NEW RESIDENT
-            ----------------------------------------------------------
-            -->
-
-            <a
-                class="btn"
-                href="register.php"
-            >
-                + Register New Resident
-            </a>
-
-
-            <!--
-            ----------------------------------------------------------
-            VIEW UPDATED RECORDS
-            ----------------------------------------------------------
-            -->
-
-            <a
-                class="btn"
-                href="resident_update_history.php"
-            >
-                View Updated Records
-            </a>
-
-
+<?php include __DIR__ . "/../includes/staff_topbar.php"; ?>
+    <div class="card card-resident">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+            <h2>Registered Residents</h2>
+            <div class="table-actions">
+                <a class="btn btn-sm btn-secondary" href="updated_records.php">View Updated Records</a>
+                <a class="btn btn-sm btn-secondary" href="resident_export.php">Export CSV</a>
+                <a class="btn" href="register.php">+ Register New Resident</a>
+            </div>
         </div>
 
+        <?php if (isset($_GET["reset"])): ?>
+            <div class="success">Resident's password has been reset to their Resident Number.</div>
+        <?php endif; ?>
+        <?php if (isset($_GET["deleted"])): ?>
+            <div class="success">Resident record deleted.</div>
+        <?php endif; ?>
 
-    </div>
-
-
-    <?php if ($success !== ""): ?>
-
-        <div class="success">
-
-            <?= e($success) ?>
-
-        </div>
-
-    <?php endif; ?>
-
-
-    <?php if ($error !== ""): ?>
-
-        <div class="error">
-
-            <?= e($error) ?>
-
-        </div>
-
-    <?php endif; ?>
-
-
-    <form
-        method="GET"
-        class="resident-search-form"
-    >
-
-        <input
-            type="text"
-            name="search"
-            placeholder="Search by name, resident number, email, or contact"
-            value="<?= e($search) ?>"
-        >
-
-    </form>
-
-
-    <div class="table-scroll">
-
-
+        <form method="GET" style="margin-bottom:16px;">
+            <input type="text" name="search" placeholder="Search by name or resident number" value="<?= e($search) ?>">
+        </form>
+        <div class="table-scroll">
         <table>
-
-
-            <thead>
-
-                <tr>
-
-                    <th>
-                        Resident Number
-                    </th>
-
-                    <th>
-                        Name
-                    </th>
-
-                    <th>
-                        Civil Status
-                    </th>
-
-                    <th>
-                        Birthday
-                    </th>
-
-                    <th>
-                        Age
-                    </th>
-
-                    <th>
-                        Occupation
-                    </th>
-
-                    <th>
-                        Employer
-                    </th>
-
-                    <th>
-                        Email
-                    </th>
-
-                    <th>
-                        Contact
-                    </th>
-
-                    <th>
-                        Address
-                    </th>
-
-                    <th class="resident-action-column">
-                        Actions
-                    </th>
-
-                </tr>
-
-            </thead>
-
-
-            <tbody>
-
-
-            <?php if (
-                $residents &&
-                $residents->num_rows > 0
-            ): ?>
-
-
-                <?php while (
-                    $r =
-                    $residents->fetch_assoc()
-                ): ?>
-
-
-                    <?php
-
-                    $full_name = trim(
-                        $r["first_name"] .
-                        " " .
-                        ($r["middle_name"] ?? "") .
-                        " " .
-                        $r["last_name"] .
-                        " " .
-                        ($r["extension_name"] ?? "")
-                    );
-
-
-                    if (
-                        $full_name === ""
-                    ) {
-
-                        $full_name =
-                            $r["resident_number"];
-
-                    }
-
-
-                    /*
-                    |--------------------------------------------------------------------------
-                    | Delete Confirmation
-                    |--------------------------------------------------------------------------
-                    */
-
-                    $delete_message =
-                        "Are you sure you want to permanently delete " .
-                        $full_name .
-                        "?\n\n" .
-                        "This will delete the resident and all associated " .
-                        "information, including spouse, children, parents, " .
-                        "character references, update history, and survey responses.\n\n" .
-                        "This action cannot be undone.";
-
-                    ?>
-
-
-                    <tr>
-
-
-                        <td>
-
-                            <?= e(
-                                $r["resident_number"]
-                            ) ?>
-
-                        </td>
-
-
-                        <td>
-
-                            <?= e(
-                                $full_name
-                            ) ?>
-
-                        </td>
-
-
-                        <td>
-
-                            <?=
-                                !empty(
-                                    $r["civil_status"]
-                                )
-                                    ? e(
-                                        $r["civil_status"]
-                                    )
-                                    : "—"
-                            ?>
-
-                        </td>
-
-
-                        <td>
-
-                            <?=
-                                !empty(
-                                    $r["birthday"]
-                                )
-                                    ? e(
-                                        date(
-                                            "M d, Y",
-                                            strtotime(
-                                                $r["birthday"]
-                                            )
-                                        )
-                                    )
-                                    : "—"
-                            ?>
-
-                        </td>
-
-
-                        <td>
-
-                            <?=
-                                $r["age"] !== null &&
-                                $r["age"] !== ""
-                                    ? e(
-                                        $r["age"]
-                                    )
-                                    : "—"
-                            ?>
-
-                        </td>
-
-
-                        <td>
-
-                            <?=
-                                !empty(
-                                    $r["occupation"]
-                                )
-                                    ? e(
-                                        $r["occupation"]
-                                    )
-                                    : "—"
-                            ?>
-
-                        </td>
-
-
-                        <td>
-
-                            <?=
-                                !empty(
-                                    $r["employer"]
-                                )
-                                    ? e(
-                                        $r["employer"]
-                                    )
-                                    : "—"
-                            ?>
-
-                        </td>
-
-
-                        <td>
-
-                            <?=
-                                !empty(
-                                    $r["email"]
-                                )
-                                    ? e(
-                                        $r["email"]
-                                    )
-                                    : "—"
-                            ?>
-
-                        </td>
-
-
-                        <td>
-
-                            <?=
-                                !empty(
-                                    $r["contact_number"]
-                                )
-                                    ? e(
-                                        $r["contact_number"]
-                                    )
-                                    : "—"
-                            ?>
-
-                        </td>
-
-
-                        <td>
-
-                            <?=
-                                !empty(
-                                    $r["address"]
-                                )
-                                    ? e(
-                                        $r["address"]
-                                    )
-                                    : "—"
-                            ?>
-
-                        </td>
-
-
-                        <td
-                            class="resident-action-column"
-                        >
-
-
-                            <div
-                                class="resident-actions"
-                            >
-
-
-                                <!--
-                                --------------------------------------------------
-                                EDIT
-                                --------------------------------------------------
-                                -->
-
-                                <a
-                                    class="btn edit-resident-btn"
-                                    href="resident_edit.php?resident_id=<?= (int) $r["resident_id"] ?>"
-                                >
-                                    Edit
-                                </a>
-
-
-                                <!--
-                                --------------------------------------------------
-                                RESET PASSWORD
-                                --------------------------------------------------
-                                -->
-
-                                <a
-                                    class="btn reset-password-btn"
-                                    href="resident_reset_password.php?resident_id=<?= (int) $r["resident_id"] ?>"
-                                >
-                                    Reset Password
-                                </a>
-
-
-                                <!--
-                                --------------------------------------------------
-                                DELETE
-                                --------------------------------------------------
-                                -->
-
-                                <form
-                                    method="POST"
-                                    action="resident_delete.php"
-                                    class="delete-resident-form"
-                                    onsubmit="return confirm(<?= json_encode($delete_message) ?>);"
-                                >
-
-
-                                    <input
-                                        type="hidden"
-                                        name="resident_id"
-                                        value="<?= (int) $r["resident_id"] ?>"
-                                    >
-
-
-                                    <button
-                                        type="submit"
-                                        class="btn btn-danger delete-resident-button"
-                                    >
-                                        Delete
-                                    </button>
-
-
-                                </form>
-
-
-                            </div>
-
-
-                        </td>
-
-
-                    </tr>
-
-
-                <?php endwhile; ?>
-
-
-            <?php else: ?>
-
-
-                <tr>
-
-                    <td
-                        colspan="11"
-                        style="text-align:center;"
-                    >
-
-                        No residents found.
-
-                    </td>
-
-                </tr>
-
-
-            <?php endif; ?>
-
-
-            </tbody>
-
-
+            <tr><th>Resident Number</th><th>Name</th><th>Email</th><th>Contact</th><th>Last Updated</th><th>Actions</th></tr>
+            <?php while ($r = $residents->fetch_assoc()): ?>
+            <tr>
+                <td><?= e($r["resident_number"]) ?></td>
+                <td><?= e(full_resident_name($r)) ?></td>
+                <td><?= e($r["email"]) ?></td>
+                <td><?= e($r["contact_number"]) ?></td>
+                <td><?= $r["updated_at"] ? e(date("M d, Y g:i A", strtotime($r["updated_at"]))) : "&mdash;" ?></td>
+                <td>
+                    <div class="table-actions">
+                        <a class="btn btn-sm btn-secondary" href="resident_view.php?resident_id=<?= (int)$r["resident_id"] ?>">View</a>
+                        <a class="btn btn-sm btn-secondary" href="resident_edit.php?resident_id=<?= (int)$r["resident_id"] ?>">Edit</a>
+                        <?php
+                            $resident_name_js = htmlspecialchars(addslashes(full_resident_name($r)), ENT_QUOTES, "UTF-8");
+                        ?>
+                        <button type="button" class="btn btn-sm btn-success-soft"
+                            onclick="openConfirmModal({
+                                url: 'resident_management.php?reset_password=<?= (int)$r["resident_id"] ?>',
+                                title: 'Reset password?',
+                                message: 'This will reset \u201c<?= $resident_name_js ?>\u201d\'s password back to their Resident Number and require them to change it on next login.',
+                                confirmLabel: 'Reset Password',
+                                danger: false
+                            })">Reset Password</button>
+                        <button type="button" class="btn btn-sm btn-danger"
+                            onclick="openConfirmModal({
+                                url: 'resident_management.php?delete=<?= (int)$r["resident_id"] ?>',
+                                title: 'Delete this resident?',
+                                message: 'This will permanently delete \u201c<?= $resident_name_js ?>\u201d and all of their saved information. This cannot be undone.',
+                                confirmLabel: 'Delete',
+                                danger: true
+                            })">Delete</button>
+                    </div>
+                </td>
+            </tr>
+            <?php endwhile; ?>
         </table>
-
-
+        </div>
     </div>
-
-
 </div>
 
-
+<div class="modal-overlay" id="confirmModal">
+    <div class="modal-box modal-sm">
+        <div class="modal-icon" id="confirmModalIcon"></div>
+        <h3 id="confirmModalTitle">Are you sure?</h3>
+        <p class="modal-message" id="confirmModalMessage"></p>
+        <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" onclick="closeConfirmModal()">Cancel</button>
+            <button type="button" class="btn btn-danger" id="confirmModalConfirmBtn" onclick="proceedConfirmModal()">Confirm</button>
+        </div>
+    </div>
 </div>
-
 
 <script src="../assets/js/script.js"></script>
-
-
 </body>
-
 </html>

@@ -1,6 +1,8 @@
 # Barangay Health Center Survey Management System
 
-IT305 Advance Web Development - Act 5 Set B
+IT305 Advance Web Development - Act 5 Set B, plus Act 5 Set A
+("Development of a Web-Based Resident Personal Information Updating
+System for a Barangay Health Center") integrated into the same portal.
 
 ## Folder structure
 
@@ -9,13 +11,17 @@ barangay_survey/
 ├── config/
 │   └── database.php          database connection settings
 ├── database/
-│   └── barangay_survey.sql   full schema + sample data, import this first
+│   ├── barangay_survey.sql   full schema + sample data, import this first
+│   └── migration_set_a.sql   only needed if you already imported the DB
+│                              before Set A was added (see below)
 ├── assets/
 │   ├── css/style.css
-│   └── js/script.js
+│   ├── js/script.js
+│   └── uploads/residents/    resident profile photos land here
 ├── includes/
 │   ├── functions.php         session handling, login guards, helpers
-│   └── staff_nav.php         shared staff navbar with active-page highlighting
+│   ├── staff_nav.php         shared staff navbar with active-page highlighting
+│   └── resident_nav.php      shared resident sidebar
 ├── resident/                 resident-facing pages
 ├── staff/                    staff-facing pages
 └── index.php                 landing page
@@ -29,9 +35,16 @@ barangay_survey/
 3. Open `http://localhost/phpmyadmin` in your browser.
 4. Drop the existing `barangay_survey_db` database if you already have an
    older copy, then click "Import" and choose `database/barangay_survey.sql`.
-   This creates the database with all tables (including the new
-   `resident_name` column on `responses`) and the sample data below.
-5. Open `http://localhost/barangay_survey/` in your browser. That's the app.
+   This creates the database with all tables (including the resident
+   personal-information fields and the `resident_children` table used by
+   Set A) and the sample data below.
+   - **Already have the database imported from before?** Don't drop it if you
+     want to keep your data — instead just import `database/migration_set_a.sql`,
+     which adds the new columns/table without touching existing rows.
+5. Make sure `assets/uploads/residents/` is writable by the web server (on
+   XAMPP this is usually already the case) — that's where uploaded resident
+   photos are saved.
+6. Open `http://localhost/barangay_survey/` in your browser. That's the app.
 
 ## Test accounts
 
@@ -49,6 +62,63 @@ and each will be asked to set a new password on first login only):
 | 2026-0003        | Mary Pauleen Salvador  |
 | 2026-0004        | Kylie Denise Marasigan |
 | 2026-0005        | Aaron Gabriel Ranes    |
+
+## Act 5 - Set A: Resident Personal Information Updating System
+
+This activity's requirements are covered by the existing resident/staff
+portal rather than a separate site, since they share the same login system
+and `residents` table. Where each requirement lives:
+
+**Residents can (`resident/` pages):**
+- Log in with their Resident Number, default password = Resident Number,
+  forced password change on first login — `resident/login.php`,
+  `resident/change_password.php`.
+- View & update personal information (name, civil status, address, contact,
+  birthday/auto-computed age, occupation, employer), contact info, spouse
+  info, children (add/remove), parents, and character references — all in
+  `resident/profile.php`.
+- Upload a passport-size photo — photo uploader at the top of
+  `resident/profile.php` (JPG/PNG/WEBP, up to 3MB).
+- Print their own profile — "Print My Profile" button on
+  `resident/profile.php` (browser print-to-PDF).
+- Log out — `resident/logout.php`.
+
+**Staff can (`staff/` pages):**
+- Secure login & dashboard — `staff/login.php`, `staff/dashboard.php`.
+- Add new resident — `staff/register.php` (auto-assigns the Resident Number
+  as the default password, per the spec).
+- View resident records / search — `staff/resident_management.php`.
+- Edit resident information (all fields, photo, children) —
+  `staff/resident_edit.php`.
+- Delete a resident record — delete button on `staff/resident_management.php`.
+- Reset a resident's password back to their Resident Number —
+  reset button on `staff/resident_management.php`.
+- View updated records (most recently edited first) —
+  `staff/updated_records.php`.
+- Print a resident's information — `staff/resident_view.php`.
+- Generate reports — resident summary section added to `staff/reports.php`,
+  plus a CSV export at `staff/resident_export.php`.
+- Log out — `staff/logout.php`.
+
+**Data validation:** required fields are enforced both in the HTML (`required`
+attributes) and again server-side before any database write; invalid or
+incomplete submissions show an inline error instead of silently failing.
+
+**Database:** all of this lives in the same `residents` table plus a new
+`resident_children` table — see `database/barangay_survey.sql` /
+`database/migration_set_a.sql`. Saving an update always updates the existing
+row (`UPDATE ... WHERE resident_id = ?`), it never inserts a duplicate.
+
+### Still needed for submission (these are things your group has to actually do)
+
+The activity's submission requirements aren't things code can generate for
+you — make sure your group still puts together:
+1. The complete source code (this folder).
+2. A short video showing how to use the system.
+3. A note on which area of the system each resident in your group worked on.
+4. The `.sql` file (already here, in `database/`).
+5. Screenshots of: the login page, the dashboard, the update-personal-info
+   page, and a successful update confirmation.
 
 ## What changed in this update
 
@@ -84,6 +154,15 @@ and each will be asked to set a new password on first login only):
   hand-written set of nav links with no active-page indicator. All staff
   pages now include the same `includes/staff_nav.php` partial, which
   highlights exactly the current page and keeps the same links everywhere.
+- **Act 5 - Set A integration:** extended `residents` with civil status,
+  birthday/age, occupation/employer, parents, spouse, references, and a
+  photo; added `resident_children`; rebuilt `resident/profile.php` around all
+  of it with print support; added `staff/resident_view.php`,
+  `staff/resident_edit.php`, `staff/updated_records.php`, and
+  `staff/resident_export.php`; added View/Edit/Reset Password/Delete actions
+  to `staff/resident_management.php`; added a resident summary to
+  `staff/reports.php`; and fixed `staff/register.php` so the default
+  password is always the Resident Number, per the spec.
 
 ## Notes for the group
 
@@ -96,9 +175,10 @@ and each will be asked to set a new password on first login only):
   `password_verify()`, never stored in plain text.
 - `results.php` computes tallies and renders them as simple bar charts using
   plain CSS, no external chart library needed.
-- `reports.php` and `results.php` both have a Print button that uses the
-  browser's print-to-PDF, which covers the "generate printable reports /
-  export" requirement without needing an extra library.
+- `reports.php`, `results.php`, `resident/profile.php`, and
+  `staff/resident_view.php` all have a Print button that uses the browser's
+  print-to-PDF, which covers the "generate printable reports / export"
+  requirement without needing an extra library.
 - Exporting straight to Excel and a login history report page are still left
   as easy extensions if your group wants to go for the optional points (the
   `login_history` table is already being written to on every login).

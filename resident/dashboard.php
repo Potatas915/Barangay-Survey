@@ -30,6 +30,15 @@ $lifetime_answered = (int)$lt_stmt->get_result()->fetch_assoc()["c"];
 $total_ever_stmt = $conn->query("SELECT COUNT(*) AS c FROM surveys");
 $total_ever = (int)$total_ever_stmt->fetch_assoc()["c"];
 $completion_rate = $total_ever > 0 ? round(($lifetime_answered / $total_ever) * 100, 1) : 0;
+
+// Nudge the resident to finish their personal information profile
+// (Act 5 - Set A) if the core fields are still blank.
+$profile_stmt = $conn->prepare("SELECT birthday, civil_status, contact_number, address, occupation FROM residents WHERE resident_id = ?");
+$profile_stmt->bind_param("i", $resident_id);
+$profile_stmt->execute();
+$profile_check = $profile_stmt->get_result()->fetch_assoc();
+$profile_incomplete = empty($profile_check["birthday"]) || empty($profile_check["civil_status"])
+    || empty($profile_check["contact_number"]) || empty($profile_check["address"]) || empty($profile_check["occupation"]);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -50,6 +59,18 @@ $completion_rate = $total_ever > 0 ? round(($lifetime_answered / $total_ever) * 
             <p>Here's what's happening with your barangay health surveys.</p>
         </div>
     </div>
+
+    <?php if ($profile_incomplete): ?>
+    <div class="card" style="border-left:4px solid var(--blue-500); margin-bottom:18px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+            <div>
+                <strong>Your profile isn't complete yet.</strong>
+                <p style="margin:4px 0 0; font-size:13px; color:#667;">Add your birthday, civil status, occupation, and other details so the health center has accurate records on file.</p>
+            </div>
+            <a class="btn btn-sm" href="profile.php">Complete My Profile</a>
+        </div>
+    </div>
+    <?php endif; ?>
 
     <div class="stat-cards-grid">
         <div class="stat-card">

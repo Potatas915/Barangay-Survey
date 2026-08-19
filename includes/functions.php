@@ -58,6 +58,103 @@ function pct_change($current, $previous) {
     return ["pct" => round(abs($pct), 1), "up" => $pct >= 0];
 }
 
+// ---------------------------------------------------------
+// Act 5 - Set A helpers: resident personal information,
+// photo upload, and formatting.
+// ---------------------------------------------------------
+
+// Computes a whole-number age from a Y-m-d birthday string.
+// Returns null if no valid birthday is given.
+function calculate_age($birthday) {
+    if (!$birthday) return null;
+    try {
+        $bday = new DateTime($birthday);
+        $today = new DateTime();
+        if ($bday > $today) return null;
+        return $today->diff($bday)->y;
+    } catch (Exception $e) {
+        return null;
+    }
+}
+
+// Builds a resident's full name from name parts, skipping empty ones.
+function full_resident_name($r) {
+    $parts = [
+        $r["first_name"] ?? "",
+        $r["middle_name"] ?? "",
+        $r["last_name"] ?? "",
+    ];
+    $name = trim(preg_replace("/\s+/", " ", implode(" ", array_filter($parts, fn($p) => trim((string)$p) !== ""))));
+    if (!empty($r["extension_name"])) {
+        $name .= " " . $r["extension_name"];
+    }
+    return $name;
+}
+
+// Folder (on disk) where resident photos are stored, and the folder's
+// URL relative to any page under resident/ or staff/ (both are one
+// level below the project root, so the same relative path works for
+// either side of the portal).
+define("RESIDENT_PHOTO_DIR", __DIR__ . "/../assets/uploads/residents/");
+define("RESIDENT_PHOTO_URL", "../assets/uploads/residents/");
+
+// Returns the browser-facing URL for a resident's photo, or null if
+// they haven't uploaded one (callers can fall back to a placeholder).
+function resident_photo_url($photo) {
+    if (empty($photo)) return null;
+    return RESIDENT_PHOTO_URL . rawurlencode($photo);
+}
+
+// Validates and stores an uploaded passport-size photo for a resident.
+// Returns [filename, null] on success or [null, "error message"] on failure.
+function save_resident_photo($resident_id, $file) {
+    if (!isset($file) || $file["error"] === UPLOAD_ERR_NO_FILE) {
+        return [null, null]; // nothing submitted, not an error
+    }
+    if ($file["error"] !== UPLOAD_ERR_OK) {
+        return [null, "There was a problem uploading the photo. Please try again."];
+    }
+
+    $allowed = ["image/jpeg" => "jpg", "image/png" => "png", "image/webp" => "webp"];
+    $mime = mime_content_type($file["tmp_name"]);
+    if (!isset($allowed[$mime])) {
+        return [null, "Photo must be a JPG, PNG, or WEBP image."];
+    }
+    if ($file["size"] > 3 * 1024 * 1024) {
+        return [null, "Photo must be smaller than 3MB."];
+    }
+
+    if (!is_dir(RESIDENT_PHOTO_DIR)) {
+        mkdir(RESIDENT_PHOTO_DIR, 0755, true);
+    }
+
+    $filename = "resident_" . (int)$resident_id . "_" . time() . "." . $allowed[$mime];
+    if (!move_uploaded_file($file["tmp_name"], RESIDENT_PHOTO_DIR . $filename)) {
+        return [null, "Unable to save the uploaded photo."];
+    }
+
+    return [$filename, null];
+}
+
+// Deletes a resident's stored photo file from disk (ignores missing files).
+function delete_resident_photo($photo) {
+    if (empty($photo)) return;
+    $path = RESIDENT_PHOTO_DIR . $photo;
+    if (is_file($path)) {
+        @unlink($path);
+    }
+}
+
+// Formats a Y-m-d date for display, or an em dash if empty.
+function format_date_display($date) {
+    if (empty($date)) return "&mdash;";
+    try {
+        return (new DateTime($date))->format("M d, Y");
+    } catch (Exception $e) {
+        return e($date);
+    }
+}
+
 // Builds a small inline SVG sparkline from an array of numeric points.
 function sparkline_svg($points, $width = 90, $height = 32, $color = "#1fae82") {
     $count = count($points);
