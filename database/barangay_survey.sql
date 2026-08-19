@@ -10,6 +10,7 @@
 --   5. Resident update history
 --   6. Before/After change storage
 --   7. Staff / Resident update tracking
+--   8. Resident archive status
 --
 -- IMPORT THIS FILE ONCE IN PHPMYADMIN
 -- =========================================================
@@ -90,6 +91,11 @@ CREATE TABLE IF NOT EXISTS residents (
     reference2_signature VARCHAR(100),
 
     photo VARCHAR(255) DEFAULT NULL,
+
+    status ENUM(
+        'active',
+        'archived'
+    ) NOT NULL DEFAULT 'active',
 
     password VARCHAR(255) NOT NULL,
 

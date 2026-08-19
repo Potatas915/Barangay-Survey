@@ -9,7 +9,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $password = $_POST["password"];
 
     $stmt = $conn->prepare(
-        "SELECT resident_id, first_name, last_name, password, is_first_login
+        "SELECT resident_id, first_name, last_name, password, is_first_login, status
          FROM residents
          WHERE resident_number = ?"
     );
@@ -25,7 +25,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $resident = $result->fetch_assoc();
 
 
-        if (password_verify($password, $resident["password"])) {
+        if ($resident["status"] === "archived") {
+
+            $error =
+                "This account has been deactivated. Please contact the barangay office.";
+
+        } else if (password_verify($password, $resident["password"])) {
 
             $_SESSION["resident_id"] =
                 $resident["resident_id"];

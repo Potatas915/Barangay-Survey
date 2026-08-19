@@ -42,45 +42,52 @@ if (isset($_GET["reset_password"])) {
 }
 
 
-// Delete a resident record entirely.
-if (isset($_GET["delete"])) {
-    $resident_id = (int)$_GET["delete"];
+// Archive a resident: keep the record (and all their survey /
+// update history) but hide them from the active list and block
+// portal login, instead of deleting anything.
+if (isset($_GET["archive"])) {
+    $resident_id = (int)$_GET["archive"];
 
     $stmt = $conn->prepare("
-        SELECT photo
-        FROM residents
+        UPDATE residents
+        SET status = 'archived'
         WHERE resident_id = ?
     ");
 
     $stmt->bind_param("i", $resident_id);
     $stmt->execute();
 
-    $row = $stmt->get_result()->fetch_assoc();
+    redirect("resident_management.php?archived=1");
+}
 
-    if ($row) {
 
-        delete_resident_photo($row["photo"]);
+// Restore a previously archived resident back to active status.
+if (isset($_GET["restore"])) {
+    $resident_id = (int)$_GET["restore"];
 
-        $del = $conn->prepare("
-            DELETE FROM residents
-            WHERE resident_id = ?
-        ");
+    $stmt = $conn->prepare("
+        UPDATE residents
+        SET status = 'active'
+        WHERE resident_id = ?
+    ");
 
-        $del->bind_param(
-            "i",
-            $resident_id
-        );
+    $stmt->bind_param("i", $resident_id);
+    $stmt->execute();
 
-        $del->execute();
-    }
-
-    redirect("resident_management.php?deleted=1");
+    redirect("resident_management.php?view=archived&restored=1");
 }
 
 
 $search = isset($_GET["search"])
     ? trim($_GET["search"])
     : "";
+
+// Which list is showing: active residents (default) or archived ones.
+$view = (isset($_GET["view"]) && $_GET["view"] === "archived")
+    ? "archived"
+    : "active";
+
+$status_filter = $view === "archived" ? "archived" : "active";
 
 
 if ($search !== "") {
@@ -100,14 +107,18 @@ if ($search !== "") {
             updated_at
         FROM residents
         WHERE
-            resident_number LIKE ?
-            OR first_name LIKE ?
-            OR last_name LIKE ?
+            status = ?
+            AND (
+                resident_number LIKE ?
+                OR first_name LIKE ?
+                OR last_name LIKE ?
+            )
         ORDER BY last_name
     ");
 
     $stmt->bind_param(
-        "sss",
+        "ssss",
+        $status_filter,
         $like,
         $like,
         $like
@@ -119,7 +130,7 @@ if ($search !== "") {
 
 } else {
 
-    $residents = $conn->query("
+    $stmt = $conn->prepare("
         SELECT
             resident_id,
             resident_number,
@@ -131,8 +142,14 @@ if ($search !== "") {
             contact_number,
             updated_at
         FROM residents
+        WHERE status = ?
         ORDER BY last_name
     ");
+
+    $stmt->bind_param("s", $status_filter);
+    $stmt->execute();
+
+    $residents = $stmt->get_result();
 }
 
 ?>
@@ -321,6 +338,95 @@ if ($search !== "") {
 
 }
 
+
+/*
+|--------------------------------------------------------------------------
+| RESIDENT ROW ACTION BUTTONS (View / Edit / Reset Password / Archive)
+|--------------------------------------------------------------------------
+|
+| Scoped to this page only via .resident-row-actions, so it can't
+| affect the shared .table-actions grid used on other pages (which
+| is sized for a 2-button layout). This row now has up to four
+| buttons, so it wraps instead of forcing a fixed-width grid that
+| the buttons no longer fit inside.
+|--------------------------------------------------------------------------
+*/
+
+.resident-row-actions {
+
+    display: flex;
+
+    flex-wrap: wrap;
+
+    align-items: center;
+
+    gap: 8px;
+
+    width: 100%;
+
+    min-width: 220px;
+
+    max-width: 320px;
+
+}
+
+
+.resident-row-actions .btn {
+
+    width: auto;
+
+    height: auto;
+
+    margin: 0;
+
+    padding: 6px 12px;
+
+    font-size: 11.5px;
+
+    text-align: center;
+
+    white-space: nowrap;
+
+    overflow: visible;
+
+    text-overflow: unset;
+
+    flex: 0 0 auto;
+
+}
+
+
+@media (max-width: 1100px) {
+
+    .resident-row-actions {
+
+        max-width: 100%;
+
+    }
+
+}
+
+
+@media (max-width: 600px) {
+
+    .resident-row-actions {
+
+        flex-direction: column;
+
+        align-items: stretch;
+
+        min-width: 0;
+
+    }
+
+    .resident-row-actions .btn {
+
+        width: 100%;
+
+    }
+
+}
+
 </style>
 
 </head>
@@ -359,7 +465,9 @@ REGISTERED RESIDENTS HEADER
 
 
     <h2>
-        Registered Residents
+        <?= $view === "archived"
+            ? "Archived Residents"
+            : "Registered Residents" ?>
     </h2>
 
 
@@ -393,6 +501,27 @@ REGISTERED RESIDENTS HEADER
             Export CSV
         </a>
 
+
+        <?php if ($view === "archived"): ?>
+
+            <a
+                class="btn btn-secondary"
+                href="resident_management.php"
+            >
+                Back to Active Residents
+            </a>
+
+        <?php else: ?>
+
+            <a
+                class="btn btn-secondary"
+                href="resident_management.php?view=archived"
+            >
+                View Archived Residents
+            </a>
+
+        <?php endif; ?>
+
     </div>
 
 
@@ -414,12 +543,30 @@ REGISTERED RESIDENTS HEADER
 
 
 <?php if (
-    isset($_GET["deleted"])
+    isset($_GET["archived"])
 ): ?>
 
     <div class="success">
 
-        Resident record deleted.
+        Resident has been archived. They
+        will no longer appear in the active
+        list and can't log in to the resident
+        portal, but their record has been kept
+        and can be restored anytime.
+
+    </div>
+
+<?php endif; ?>
+
+
+<?php if (
+    isset($_GET["restored"])
+): ?>
+
+    <div class="success">
+
+        Resident has been restored and is
+        active again.
 
     </div>
 
@@ -430,6 +577,16 @@ REGISTERED RESIDENTS HEADER
     method="GET"
     style="margin-bottom:16px;"
 >
+
+    <?php if ($view === "archived"): ?>
+
+        <input
+            type="hidden"
+            name="view"
+            value="archived"
+        >
+
+    <?php endif; ?>
 
     <input
         type="text"
@@ -552,7 +709,7 @@ REGISTERED RESIDENTS HEADER
         -->
 
 
-        <div class="table-actions">
+        <div class="resident-row-actions">
 
 
             <a
@@ -585,34 +742,54 @@ REGISTERED RESIDENTS HEADER
             ?>
 
 
-            <button
-                type="button"
-                class="btn btn-sm btn-success-soft"
-                onclick="openConfirmModal({
-                    url: 'resident_management.php?reset_password=<?= (int)$r["resident_id"] ?>',
-                    title: 'Reset password?',
-                    message: 'This will reset &quot;<?= $resident_name_js ?>&quot;\'s password back to their Resident Number and require them to change it on next login.',
-                    confirmLabel: 'Reset Password',
-                    danger: false
-                })"
-            >
-                Reset Password
-            </button>
+            <?php if ($view !== "archived"): ?>
+
+                <button
+                    type="button"
+                    class="btn btn-sm btn-success-soft"
+                    onclick="openConfirmModal({
+                        url: 'resident_management.php?reset_password=<?= (int)$r["resident_id"] ?>',
+                        title: 'Reset password?',
+                        message: 'This will reset &quot;<?= $resident_name_js ?>&quot;\'s password back to their Resident Number and require them to change it on next login.',
+                        confirmLabel: 'Reset Password',
+                        danger: false
+                    })"
+                >
+                    Reset Password
+                </button>
 
 
-            <button
-                type="button"
-                class="btn btn-sm btn-danger"
-                onclick="openConfirmModal({
-                    url: 'resident_management.php?delete=<?= (int)$r["resident_id"] ?>',
-                    title: 'Delete this resident?',
-                    message: 'This will permanently delete &quot;<?= $resident_name_js ?>&quot; and all of their saved information. This cannot be undone.',
-                    confirmLabel: 'Delete',
-                    danger: true
-                })"
-            >
-                Delete
-            </button>
+                <button
+                    type="button"
+                    class="btn btn-sm btn-danger"
+                    onclick="openConfirmModal({
+                        url: 'resident_management.php?archive=<?= (int)$r["resident_id"] ?>',
+                        title: 'Archive this resident?',
+                        message: 'This will move &quot;<?= $resident_name_js ?>&quot; to the archived list and block their portal login. Their record is kept and can be restored anytime.',
+                        confirmLabel: 'Archive',
+                        danger: true
+                    })"
+                >
+                    Archive
+                </button>
+
+            <?php else: ?>
+
+                <button
+                    type="button"
+                    class="btn btn-sm btn-success-soft"
+                    onclick="openConfirmModal({
+                        url: 'resident_management.php?restore=<?= (int)$r["resident_id"] ?>',
+                        title: 'Restore this resident?',
+                        message: 'This will make &quot;<?= $resident_name_js ?>&quot; active again and restore their portal login access.',
+                        confirmLabel: 'Restore',
+                        danger: false
+                    })"
+                >
+                    Restore
+                </button>
+
+            <?php endif; ?>
 
 
         </div>
