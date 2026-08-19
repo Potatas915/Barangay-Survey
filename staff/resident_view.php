@@ -515,6 +515,9 @@ function resident_history_field_label(
         "extension_name" =>
             "Extension Name",
 
+        "gender" =>
+            "Gender",
+
         "civil_status" =>
             "Civil Status",
 
@@ -1987,6 +1990,21 @@ RESIDENT PROFILE
             <span>
                 <?= e(
                     $resident["extension_name"] ?? ""
+                ) ?: "—" ?>
+            </span>
+
+        </div>
+
+
+        <div class="info-row">
+
+            <strong>
+                Gender
+            </strong>
+
+            <span>
+                <?= e(
+                    $resident["gender"] ?? ""
                 ) ?: "—" ?>
             </span>
 
