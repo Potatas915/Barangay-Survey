@@ -61,18 +61,18 @@ function resident_report_escape($value)
 
 $civil_status_filter =
     isset($_GET["civil_status"])
-        ? trim($_GET["civil_status"])
-        : "";
+    ? trim($_GET["civil_status"])
+    : "";
 
 $age_group_filter =
     isset($_GET["age_group"])
-        ? trim($_GET["age_group"])
-        : "";
+    ? trim($_GET["age_group"])
+    : "";
 
 $occupation_filter =
     isset($_GET["occupation"])
-        ? trim($_GET["occupation"])
-        : "";
+    ? trim($_GET["occupation"])
+    : "";
 
 
 /*
@@ -115,7 +115,6 @@ if (
 ) {
 
     $civil_status_filter = "";
-
 }
 
 
@@ -129,7 +128,6 @@ if (
 ) {
 
     $age_group_filter = "";
-
 }
 
 
@@ -165,7 +163,6 @@ if (
         $civil_status_filter;
 
     $types .= "s";
-
 }
 
 
@@ -179,9 +176,7 @@ if (
     $age_group_filter !== ""
 ) {
 
-    switch (
-        $age_group_filter
-    ) {
+    switch ($age_group_filter) {
 
         case "0-17":
 
@@ -221,9 +216,7 @@ if (
                 "age >= 61";
 
             break;
-
     }
-
 }
 
 
@@ -244,7 +237,6 @@ if (
         $occupation_filter;
 
     $types .= "s";
-
 }
 
 
@@ -276,10 +268,7 @@ function resident_report_query(
 
     if (!$stmt) {
 
-        die(
-            "Unable to prepare resident report."
-        );
-
+        die("Unable to prepare resident report.");
     }
 
 
@@ -292,7 +281,6 @@ function resident_report_query(
             $types,
             ...$params
         );
-
     }
 
 
@@ -300,15 +288,11 @@ function resident_report_query(
         !$stmt->execute()
     ) {
 
-        die(
-            "Unable to load resident report."
-        );
-
+        die("Unable to load resident report.");
     }
 
 
     return $stmt->get_result();
-
 }
 
 
@@ -511,20 +495,18 @@ while (
 
         $status =
             "Not provided";
-
     }
 
 
     $civil_data[] = [
 
         "label" =>
-            $status,
+        $status,
 
         "total" =>
-            (int) $row["total"]
+        (int) $row["total"]
 
     ];
-
 }
 
 
@@ -583,20 +565,18 @@ while (
 
         $occupation =
             "Not provided";
-
     }
 
 
     $occupation_data[] = [
 
         "label" =>
-            $occupation,
+        $occupation,
 
         "total" =>
-            (int) $row["total"]
+        (int) $row["total"]
 
     ];
-
 }
 
 
@@ -655,20 +635,18 @@ while (
 
         $employer =
             "Not provided";
-
     }
 
 
     $employer_data[] = [
 
         "label" =>
-            $employer,
+        $employer,
 
         "total" =>
-            (int) $row["total"]
+        (int) $row["total"]
 
     ];
-
 }
 
 
@@ -727,20 +705,18 @@ while (
 
         $address =
             "Not provided";
-
     }
 
 
     $address_data[] = [
 
         "label" =>
-            $address,
+        $address,
 
         "total" =>
-            (int) $row["total"]
+        (int) $row["total"]
 
     ];
-
 }
 
 
@@ -950,7 +926,6 @@ while (
 
     $occupation_options[] =
         $occupation_row["occupation"];
-
 }
 
 ?>
@@ -959,804 +934,756 @@ while (
 
 <head>
 
-<meta charset="UTF-8">
+    <meta charset="UTF-8">
 
-<meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
->
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0">
 
-<title>
-    Reports
-</title>
-
-
-<link
-    rel="stylesheet"
-    href="../assets/css/style.css?v=<?= filemtime(__DIR__ . "/../assets/css/style.css") ?>"
->
+    <title>
+        Reports
+    </title>
 
 
-<script>
-
-(function () {
-
-    var theme =
-        localStorage.getItem("theme");
-
-    if (
-        theme === "dark"
-    ) {
-
-        document.documentElement.setAttribute(
-            "data-theme",
-            "dark"
-        );
-
-    }
-
-})();
-
-</script>
+    <link
+        rel="stylesheet"
+        href="../assets/css/style.css?v=<?= filemtime(__DIR__ . "/../assets/css/style.css") ?>">
 
 
-<script>
+    <script>
+        (function() {
 
-(function () {
+            var theme =
+                localStorage.getItem("theme");
 
-    try {
+            if (
+                theme === "dark"
+            ) {
 
-        if (
-            localStorage.getItem(
-                "sidebarCollapsed"
-            ) === "true"
-        ) {
+                document.documentElement.setAttribute(
+                    "data-theme",
+                    "dark"
+                );
 
-            document.documentElement.setAttribute(
-                "data-sidebar",
-                "collapsed"
-            );
+            }
 
-        }
-
-    }
-    catch (e) {}
-
-})();
-
-</script>
+        })();
+    </script>
 
 
-<style>
+    <script>
+        (function() {
 
-/*
+            try {
+
+                if (
+                    localStorage.getItem(
+                        "sidebarCollapsed"
+                    ) === "true"
+                ) {
+
+                    document.documentElement.setAttribute(
+                        "data-sidebar",
+                        "collapsed"
+                    );
+
+                }
+
+            } catch (e) {}
+
+        })();
+    </script>
+
+
+    <style>
+        /*
 |--------------------------------------------------------------------------
 | Resident Report Header
 |--------------------------------------------------------------------------
 */
 
-.resident-reports-header {
+        .resident-reports-header {
 
-    display: flex;
+            display: flex;
 
-    align-items: center;
+            align-items: center;
 
-    justify-content: space-between;
+            justify-content: space-between;
 
-    gap: 20px;
+            gap: 20px;
 
-    margin-bottom: 20px;
+            margin-bottom: 20px;
 
-}
-
-
-.resident-reports-header h2 {
-
-    margin: 0;
-
-}
+        }
 
 
-.resident-reports-header p {
+        .resident-reports-header h2 {
 
-    margin: 5px 0 0;
+            margin: 0;
 
-    font-size: 13px;
-
-    opacity: .65;
-
-}
+        }
 
 
-.resident-reports-actions {
+        .resident-reports-header p {
 
-    display: flex;
+            margin: 5px 0 0;
 
-    gap: 8px;
+            font-size: 13px;
 
-    flex-wrap: wrap;
+            opacity: .65;
 
-    justify-content: flex-end;
-
-}
+        }
 
 
-.resident-reports-actions .btn {
+        .resident-reports-actions {
 
-    white-space: nowrap;
+            display: flex;
 
-}
+            gap: 8px;
+
+            flex-wrap: wrap;
+
+            justify-content: flex-end;
+
+        }
 
 
-/*
+        .resident-reports-actions .btn {
+
+            white-space: nowrap;
+
+        }
+
+
+        /*
 |--------------------------------------------------------------------------
 | Filters
 |--------------------------------------------------------------------------
 */
 
-.resident-report-filters {
+        .resident-report-filters {
 
-    display: grid;
+            display: grid;
 
-    grid-template-columns:
-        repeat(
-            4,
-            minmax(
-                0,
-                1fr
-            )
-        );
+            grid-template-columns:
+                repeat(4,
+                    minmax(0,
+                        1fr));
 
-    gap: 12px;
+            gap: 12px;
 
-    padding: 15px;
+            padding: 15px;
 
-    margin-bottom: 18px;
+            margin-bottom: 18px;
 
-    border:
-        1px solid
-        rgba(0, 0, 0, .10);
+            border:
+                1px solid rgba(0, 0, 0, .10);
 
-    border-radius: 10px;
+            border-radius: 10px;
 
-}
+        }
 
 
-.resident-report-filter {
+        .resident-report-filter {
 
-    min-width: 0;
+            min-width: 0;
 
-}
-
-
-.resident-report-filter label {
-
-    display: block;
-
-    margin-bottom: 6px;
-
-    font-size: 12px;
-
-    font-weight: 700;
-
-}
+        }
 
 
-.resident-report-filter select {
+        .resident-report-filter label {
 
-    width: 100%;
+            display: block;
 
-}
+            margin-bottom: 6px;
 
+            font-size: 12px;
 
-.resident-report-filter-actions {
+            font-weight: 700;
 
-    display: flex;
-
-    align-items: flex-end;
-
-    gap: 8px;
-
-}
+        }
 
 
-.resident-report-filter-actions .btn {
+        .resident-report-filter select {
 
-    flex: 1;
+            width: 100%;
 
-}
+        }
 
 
-/*
+        .resident-report-filter-actions {
+
+            display: flex;
+
+            align-items: flex-end;
+
+            gap: 8px;
+
+        }
+
+
+        .resident-report-filter-actions .btn {
+
+            flex: 1;
+
+        }
+
+
+        /*
 |--------------------------------------------------------------------------
 | Summary Cards
 |--------------------------------------------------------------------------
 */
 
-.resident-report-summary {
+        .resident-report-summary {
 
-    display: grid;
+            display: grid;
 
-    grid-template-columns:
-        repeat(
-            4,
-            minmax(
-                0,
-                1fr
-            )
-        );
+            grid-template-columns:
+                repeat(4,
+                    minmax(0,
+                        1fr));
 
-    gap: 12px;
+            gap: 12px;
 
-    margin-bottom: 22px;
+            margin-bottom: 22px;
 
-}
+        }
 
 
-.resident-report-card {
+        .resident-report-card {
 
-    padding: 16px;
+            padding: 16px;
 
-    border:
-        1px solid
-        rgba(0, 0, 0, .10);
+            border:
+                1px solid rgba(0, 0, 0, .10);
 
-    border-radius: 10px;
+            border-radius: 10px;
 
-}
-
-
-.resident-report-card-label {
-
-    font-size: 12px;
-
-    opacity: .65;
-
-    margin-bottom: 8px;
-
-}
+        }
 
 
-.resident-report-card-value {
+        .resident-report-card-label {
 
-    font-size: 28px;
+            font-size: 12px;
 
-    font-weight: 700;
+            opacity: .65;
 
-    line-height: 1.1;
+            margin-bottom: 8px;
 
-}
+        }
 
 
-/*
+        .resident-report-card-value {
+
+            font-size: 28px;
+
+            font-weight: 700;
+
+            line-height: 1.1;
+
+        }
+
+
+        /*
 |--------------------------------------------------------------------------
 | Report Grid
 |--------------------------------------------------------------------------
 */
 
-.resident-report-grid {
+        .resident-report-grid {
 
-    display: grid;
+            display: grid;
 
-    grid-template-columns:
-        repeat(
-            2,
-            minmax(
-                0,
-                1fr
-            )
-        );
+            grid-template-columns:
+                repeat(2,
+                    minmax(0,
+                        1fr));
 
-    gap: 18px;
+            gap: 18px;
 
-    margin-bottom: 22px;
+            margin-bottom: 22px;
 
-}
+        }
 
 
-.resident-report-panel {
+        .resident-report-panel {
 
-    min-width: 0;
+            min-width: 0;
 
-    border:
-        1px solid
-        rgba(0, 0, 0, .10);
+            border:
+                1px solid rgba(0, 0, 0, .10);
 
-    border-radius: 10px;
+            border-radius: 10px;
 
-    overflow: hidden;
+            overflow: hidden;
 
-}
-
-
-.resident-report-panel-full {
-
-    grid-column:
-        1 / -1;
-
-}
+        }
 
 
-.resident-report-panel-header {
+        .resident-report-panel-full {
 
-    padding: 15px 18px;
+            grid-column:
+                1 / -1;
 
-    border-bottom:
-        1px solid
-        rgba(0, 0, 0, .08);
-
-}
+        }
 
 
-.resident-report-panel-header h3 {
+        .resident-report-panel-header {
 
-    margin: 0;
+            padding: 15px 18px;
 
-    font-size: 16px;
+            border-bottom:
+                1px solid rgba(0, 0, 0, .08);
 
-}
-
-
-.resident-report-panel-header p {
-
-    margin: 4px 0 0;
-
-    font-size: 13px;
-
-    opacity: .62;
-
-}
+        }
 
 
-.resident-report-panel-body {
+        .resident-report-panel-header h3 {
 
-    padding: 18px;
+            margin: 0;
 
-}
+            font-size: 16px;
+
+        }
 
 
-/*
+        .resident-report-panel-header p {
+
+            margin: 4px 0 0;
+
+            font-size: 13px;
+
+            opacity: .62;
+
+        }
+
+
+        .resident-report-panel-body {
+
+            padding: 18px;
+
+        }
+
+
+        /*
 |--------------------------------------------------------------------------
 | Report Bars
 |--------------------------------------------------------------------------
 */
 
-.report-bar-row {
+        .report-bar-row {
 
-    display: grid;
+            display: grid;
 
-    grid-template-columns:
-        120px
-        minmax(0, 1fr)
-        55px;
+            grid-template-columns:
+                120px minmax(0, 1fr) 55px;
 
-    align-items: center;
+            align-items: center;
 
-    gap: 10px;
+            gap: 10px;
 
-    margin-bottom: 13px;
+            margin-bottom: 13px;
 
-}
+        }
 
 
-.report-bar-row:last-child {
+        .report-bar-row:last-child {
 
-    margin-bottom: 0;
+            margin-bottom: 0;
 
-}
-
-
-.report-bar-label {
-
-    min-width: 0;
-
-    font-size: 13px;
-
-    white-space: nowrap;
-
-    overflow: hidden;
-
-    text-overflow: ellipsis;
-
-}
+        }
 
 
-.report-bar-track {
+        .report-bar-label {
 
-    height: 10px;
+            min-width: 0;
 
-    background:
-        rgba(0, 0, 0, .08);
+            font-size: 13px;
 
-    border-radius: 99px;
+            white-space: nowrap;
 
-    overflow: hidden;
+            overflow: hidden;
 
-}
+            text-overflow: ellipsis;
 
-
-.report-bar-fill {
-
-    height: 100%;
-
-    background: #111111;
-
-    border-radius: 99px;
-
-}
+        }
 
 
-.report-bar-value {
+        .report-bar-track {
 
-    text-align: right;
+            height: 10px;
 
-    font-size: 13px;
+            background:
+                rgba(0, 0, 0, .08);
 
-    font-weight: 700;
+            border-radius: 99px;
 
-}
+            overflow: hidden;
+
+        }
 
 
-/*
+        .report-bar-fill {
+
+            height: 100%;
+
+            background: #111111;
+
+            border-radius: 99px;
+
+        }
+
+
+        .report-bar-value {
+
+            text-align: right;
+
+            font-size: 13px;
+
+            font-weight: 700;
+
+        }
+
+
+        /*
 |--------------------------------------------------------------------------
 | Resident Directory
 |--------------------------------------------------------------------------
 */
 
-.resident-report-table-wrapper {
+        .resident-report-table-wrapper {
 
-    width: 100%;
+            width: 100%;
 
-    overflow-x: auto;
+            overflow-x: auto;
 
-}
-
-
-.resident-report-table {
-
-    width: 100%;
-
-    border-collapse: collapse;
-
-    min-width: 950px;
-
-}
+        }
 
 
-.resident-report-table th,
-.resident-report-table td {
+        .resident-report-table {
 
-    padding: 11px 12px;
+            width: 100%;
 
-    text-align: left;
+            border-collapse: collapse;
 
-    border-bottom:
-        1px solid
-        rgba(0, 0, 0, .07);
+            min-width: 950px;
 
-    vertical-align: top;
-
-}
+        }
 
 
-.resident-report-table th {
+        .resident-report-table th,
+        .resident-report-table td {
 
-    font-size: 12px;
+            padding: 11px 12px;
 
-    text-transform: uppercase;
+            text-align: left;
 
-    letter-spacing: .03em;
+            border-bottom:
+                1px solid rgba(0, 0, 0, .07);
 
-    opacity: .68;
+            vertical-align: top;
 
-}
-
-
-.resident-report-table td {
-
-    font-size: 13px;
-
-}
+        }
 
 
-.resident-report-table tbody tr:last-child td {
+        .resident-report-table th {
 
-    border-bottom: 0;
+            font-size: 12px;
 
-}
+            text-transform: uppercase;
 
+            letter-spacing: .03em;
 
-.resident-report-empty {
+            opacity: .68;
 
-    padding: 28px 15px;
-
-    text-align: center;
-
-    opacity: .60;
-
-}
+        }
 
 
-/*
+        .resident-report-table td {
+
+            font-size: 13px;
+
+        }
+
+
+        .resident-report-table tbody tr:last-child td {
+
+            border-bottom: 0;
+
+        }
+
+
+        .resident-report-empty {
+
+            padding: 28px 15px;
+
+            text-align: center;
+
+            opacity: .60;
+
+        }
+
+
+        /*
 |--------------------------------------------------------------------------
 | Dark Mode
 |--------------------------------------------------------------------------
 */
 
-[data-theme="dark"]
-.resident-report-filters,
-[data-theme="dark"]
-.resident-report-card,
-[data-theme="dark"]
-.resident-report-panel {
+        [data-theme="dark"] .resident-report-filters,
+        [data-theme="dark"] .resident-report-card,
+        [data-theme="dark"] .resident-report-panel {
 
-    border-color:
-        rgba(255,255,255,.12);
+            border-color:
+                rgba(255, 255, 255, .12);
 
-}
+        }
 
 
-[data-theme="dark"]
-.resident-report-panel-header {
+        [data-theme="dark"] .resident-report-panel-header {
 
-    border-color:
-        rgba(255,255,255,.10);
+            border-color:
+                rgba(255, 255, 255, .10);
 
-}
-
-
-[data-theme="dark"]
-.resident-report-table th,
-[data-theme="dark"]
-.resident-report-table td {
-
-    border-color:
-        rgba(255,255,255,.08);
-
-}
+        }
 
 
-[data-theme="dark"]
-.report-bar-track {
+        [data-theme="dark"] .resident-report-table th,
+        [data-theme="dark"] .resident-report-table td {
 
-    background:
-        rgba(255,255,255,.10);
+            border-color:
+                rgba(255, 255, 255, .08);
 
-}
-
-
-[data-theme="dark"]
-.report-bar-fill {
-
-    background:
-        #ffffff;
-
-}
+        }
 
 
-/*
+        [data-theme="dark"] .report-bar-track {
+
+            background:
+                rgba(255, 255, 255, .10);
+
+        }
+
+
+        [data-theme="dark"] .report-bar-fill {
+
+            background:
+                #ffffff;
+
+        }
+
+
+        /*
 |--------------------------------------------------------------------------
 | Print
 |--------------------------------------------------------------------------
 */
 
-@media print {
+        @media print {
 
-    @page {
+            @page {
 
-        size: A4;
+                size: A4;
 
-        margin: 12mm;
+                margin: 12mm;
 
-    }
-
-
-    body {
-
-        background: #ffffff !important;
-
-        color: #000000 !important;
-
-    }
+            }
 
 
-    .sidebar,
-    .topbar,
-    nav,
-    .no-print,
-    .resident-reports-actions,
-    .resident-report-filters {
+            body {
 
-        display: none !important;
+                background: #ffffff !important;
 
-    }
+                color: #000000 !important;
+
+            }
 
 
-    .container {
+            .sidebar,
+            .topbar,
+            nav,
+            .no-print,
+            .resident-reports-actions,
+            .resident-report-filters {
 
-        margin: 0 !important;
+                display: none !important;
 
-        padding: 0 !important;
-
-        width: 100% !important;
-
-        max-width: none !important;
-
-    }
-
-
-    .card {
-
-        box-shadow: none !important;
-
-        border: 0 !important;
-
-        padding: 0 !important;
-
-        margin-bottom: 20px !important;
-
-    }
+            }
 
 
-    .resident-report-card,
-    .resident-report-panel {
+            .container {
 
-        border:
-            1px solid #999 !important;
+                margin: 0 !important;
 
-    }
+                padding: 0 !important;
 
+                width: 100% !important;
 
-    .resident-report-summary {
+                max-width: none !important;
 
-        grid-template-columns:
-            repeat(
-                4,
-                1fr
-            );
-
-    }
+            }
 
 
-    .resident-report-panel {
+            .card {
 
-        break-inside: avoid;
+                box-shadow: none !important;
 
-    }
+                border: 0 !important;
 
+                padding: 0 !important;
 
-    .resident-report-table {
+                margin-bottom: 20px !important;
 
-        min-width: 0;
-
-    }
-
-
-    .resident-report-table th,
-    .resident-report-table td {
-
-        font-size: 8px;
-
-        padding: 5px;
-
-    }
-
-}
+            }
 
 
-/*
+            .resident-report-card,
+            .resident-report-panel {
+
+                border:
+                    1px solid #999 !important;
+
+            }
+
+
+            .resident-report-summary {
+
+                grid-template-columns:
+                    repeat(4,
+                        1fr);
+
+            }
+
+
+            .resident-report-panel {
+
+                break-inside: avoid;
+
+            }
+
+
+            .resident-report-table {
+
+                min-width: 0;
+
+            }
+
+
+            .resident-report-table th,
+            .resident-report-table td {
+
+                font-size: 8px;
+
+                padding: 5px;
+
+            }
+
+        }
+
+
+        /*
 |--------------------------------------------------------------------------
 | Responsive
 |--------------------------------------------------------------------------
 */
 
-@media (max-width: 1000px) {
+        @media (max-width: 1000px) {
 
-    .resident-report-summary {
+            .resident-report-summary {
 
-        grid-template-columns:
-            repeat(
-                2,
-                minmax(
-                    0,
-                    1fr
-                )
-            );
+                grid-template-columns:
+                    repeat(2,
+                        minmax(0,
+                            1fr));
 
-    }
+            }
 
 
-    .resident-report-filters {
+            .resident-report-filters {
 
-        grid-template-columns:
-            repeat(
-                2,
-                minmax(
-                    0,
-                    1fr
-                )
-            );
+                grid-template-columns:
+                    repeat(2,
+                        minmax(0,
+                            1fr));
 
-    }
+            }
 
-}
+        }
 
 
-@media (max-width: 760px) {
+        @media (max-width: 760px) {
 
-    .resident-reports-header {
+            .resident-reports-header {
 
-        align-items: flex-start;
+                align-items: flex-start;
 
-        flex-direction: column;
+                flex-direction: column;
 
-    }
-
-
-    .resident-reports-actions {
-
-        width: 100%;
-
-        justify-content: flex-start;
-
-    }
+            }
 
 
-    .resident-report-summary {
+            .resident-reports-actions {
 
-        grid-template-columns:
-            1fr 1fr;
+                width: 100%;
 
-    }
+                justify-content: flex-start;
 
-
-    .resident-report-grid {
-
-        grid-template-columns:
-            1fr;
-
-    }
+            }
 
 
-    .resident-report-panel-full {
+            .resident-report-summary {
 
-        grid-column: auto;
+                grid-template-columns:
+                    1fr 1fr;
 
-    }
-
-
-    .resident-report-filters {
-
-        grid-template-columns:
-            1fr;
-
-    }
+            }
 
 
-    .report-bar-row {
+            .resident-report-grid {
 
-        grid-template-columns:
-            90px
-            minmax(0, 1fr)
-            45px;
+                grid-template-columns:
+                    1fr;
 
-    }
-
-}
+            }
 
 
-@media (max-width: 500px) {
+            .resident-report-panel-full {
 
-    .resident-report-summary {
+                grid-column: auto;
 
-        grid-template-columns:
-            1fr;
+            }
 
-    }
 
-}
+            .resident-report-filters {
 
-</style>
+                grid-template-columns:
+                    1fr;
+
+            }
+
+
+            .report-bar-row {
+
+                grid-template-columns:
+                    90px minmax(0, 1fr) 45px;
+
+            }
+
+        }
+
+
+        @media (max-width: 500px) {
+
+            .resident-report-summary {
+
+                grid-template-columns:
+                    1fr;
+
+            }
+
+        }
+    </style>
 
 </head>
 
@@ -1764,661 +1691,616 @@ while (
 <body>
 
 
-<?php
+    <?php
 
-$no_print_nav = true;
+    $no_print_nav = true;
 
-include __DIR__ . "/../includes/staff_nav.php";
+    include __DIR__ . "/../includes/staff_nav.php";
 
-?>
-
-
-<div class="container">
+    ?>
 
 
-<?php
-
-include __DIR__ . "/../includes/staff_topbar.php";
-
-?>
+    <div class="container">
 
 
-<!--
+        <?php
+
+        include __DIR__ . "/../includes/staff_topbar.php";
+
+        ?>
+
+
+        <!--
 ============================================================================
 SURVEY SUMMARY REPORT
 ============================================================================
 -->
 
-<div class="card">
+        <div class="card">
 
 
-    <div
-        style="
+            <div
+                style="
             display:flex;
             justify-content:space-between;
             align-items:center;
             gap:15px;
-        "
-    >
+        ">
 
-        <h2>
-            Survey Summary Report
-        </h2>
-
-
-        <button
-            class="no-print"
-            type="button"
-            onclick="window.print()"
-        >
-            Print / Export as PDF
-        </button>
-
-    </div>
+                <h2>
+                    Survey Summary Report
+                </h2>
 
 
-    <p
-        style="
+                <button
+                    class="no-print"
+                    type="button"
+                    onclick="window.print()">
+                    Print / Export as PDF
+                </button>
+
+            </div>
+
+
+            <p
+                style="
             font-size:13px;
             color:#667;
-        "
-    >
-        Use your browser's Print dialog and choose
-        "Save as PDF" to export this report.
-    </p>
+        ">
+                Use your browser's Print dialog and choose
+                "Save as PDF" to export this report.
+            </p>
 
 
-    <div class="table-scroll">
+            <div class="table-scroll">
 
 
-        <table>
+                <table>
 
 
-            <tr>
+                    <tr>
 
-                <th>
-                    Survey Title
-                </th>
+                        <th>
+                            Survey Title
+                        </th>
 
-                <th>
-                    Period
-                </th>
+                        <th>
+                            Period
+                        </th>
 
-                <th>
-                    Status
-                </th>
+                        <th>
+                            Status
+                        </th>
 
-                <th>
-                    Questions
-                </th>
+                        <th>
+                            Questions
+                        </th>
 
-                <th>
-                    Responses
-                </th>
+                        <th>
+                            Responses
+                        </th>
 
-                <th class="no-print">
-                    View Results
-                </th>
+                        <th class="no-print">
+                            View Results
+                        </th>
 
-            </tr>
-
-
-            <?php while (
-                $r =
-                $reports->fetch_assoc()
-            ): ?>
+                    </tr>
 
 
-                <tr>
-
-                    <td>
-
-                        <?= e(
-                            $r["title"]
-                        ) ?>
-
-                    </td>
+                    <?php while (
+                        $r =
+                        $reports->fetch_assoc()
+                    ): ?>
 
 
-                    <td>
+                        <tr>
 
-                        <?= e(
-                            $r["start_date"]
-                        ) ?>
+                            <td>
 
-                        to
+                                <?= e(
+                                    $r["title"]
+                                ) ?>
 
-                        <?= e(
-                            $r["end_date"]
-                        ) ?>
-
-                    </td>
+                            </td>
 
 
-                    <td>
+                            <td>
 
-                        <?= $r["status"] === "active"
-                            ? "Active"
-                            : "Inactive"
-                        ?>
+                                <?= e(
+                                    $r["start_date"]
+                                ) ?>
 
-                    </td>
+                                to
 
+                                <?= e(
+                                    $r["end_date"]
+                                ) ?>
 
-                    <td>
-
-                        <?= (int)
-                            $r["question_count"]
-                        ?>
-
-                    </td>
+                            </td>
 
 
-                    <td>
+                            <td>
 
-                        <?= (int)
-                            $r["response_count"]
-                        ?>
+                                <?= $r["status"] === "active"
+                                    ? "Active"
+                                    : "Inactive"
+                                ?>
 
-                    </td>
-
-
-                    <td class="no-print">
-
-                        <a
-                            class="btn btn-reports"
-                            href="results.php?survey_id=<?= (int) $r["survey_id"] ?>"
-                        >
-                            View
-                        </a>
-
-                    </td>
-
-                </tr>
+                            </td>
 
 
-            <?php endwhile; ?>
+                            <td>
+
+                                <?= (int)
+                                $r["question_count"]
+                                ?>
+
+                            </td>
 
 
-        </table>
+                            <td>
+
+                                <?= (int)
+                                $r["response_count"]
+                                ?>
+
+                            </td>
 
 
-    </div>
+                            <td class="no-print">
+
+                                <a
+                                    class="btn btn-reports"
+                                    href="results.php?survey_id=<?= (int) $r["survey_id"] ?>">
+                                    View
+                                </a>
+
+                            </td>
+
+                        </tr>
 
 
-</div>
+                    <?php endwhile; ?>
 
 
-<!--
+                </table>
+
+
+            </div>
+
+
+        </div>
+
+
+        <!--
 ============================================================================
 RESIDENT REPORT
 ============================================================================
 -->
 
-<div class="card">
+        <div class="card">
 
 
-    <div
-        class="resident-reports-header"
-    >
+            <div
+                class="resident-reports-header">
 
 
-        <div>
+                <div>
 
-            <h2>
-                Resident Report
-            </h2>
+                    <h2>
+                        Resident Report
+                    </h2>
 
-            <p>
-                Reports based on registered resident information.
-            </p>
+                    <p>
+                        Reports based on registered resident information.
+                    </p>
 
-        </div>
-
-
-        <div
-            class="resident-reports-actions no-print"
-        >
+                </div>
 
 
-            <a
-                href="resident_export.php"
-                class="btn btn-sm btn-secondary"
-            >
-                Export CSV
-            </a>
+                <div
+                    class="resident-reports-actions no-print">
 
 
-            <button
-                type="button"
-                class="btn btn-sm"
-                id="printResidentReport"
-            >
-                Print / Export as PDF
-            </button>
+                    <a
+                        href="resident_export.php"
+                        class="btn btn-sm btn-secondary">
+                        Export CSV
+                    </a>
 
 
-        </div>
+                    <button
+                        type="button"
+                        class="btn btn-sm"
+                        id="printResidentReport">
+                        Print / Export as PDF
+                    </button>
 
 
-    </div>
+                </div>
 
 
-    <!--
+            </div>
+
+
+            <!--
     ==========================================================================
     FILTERS
     ==========================================================================
     -->
 
-    <form
-        method="GET"
-        class="resident-report-filters no-print"
-    >
+            <form
+                method="GET"
+                class="resident-report-filters no-print">
 
 
-        <div
-            class="resident-report-filter"
-        >
+                <div
+                    class="resident-report-filter">
 
-            <label
-                for="civil_status"
-            >
-                Civil Status
-            </label>
+                    <label
+                        for="civil_status">
+                        Civil Status
+                    </label>
 
 
-            <select
-                name="civil_status"
-                id="civil_status"
-            >
+                    <select
+                        name="civil_status"
+                        id="civil_status">
 
-                <option value="">
-                    All Civil Statuses
-                </option>
-
-
-                <?php foreach (
-                    $allowed_civil_statuses
-                    as $status
-                ): ?>
-
-                    <option
-                        value="<?= resident_report_escape($status) ?>"
-                        <?= $civil_status_filter === $status
-                            ? "selected"
-                            : ""
-                        ?>
-                    >
-
-                        <?= resident_report_escape(
-                            $status
-                        ) ?>
-
-                    </option>
-
-                <?php endforeach; ?>
+                        <option value="">
+                            All Civil Statuses
+                        </option>
 
 
-            </select>
+                        <?php foreach (
+                            $allowed_civil_statuses
+                            as $status
+                        ): ?>
 
-        </div>
+                            <option
+                                value="<?= resident_report_escape($status) ?>"
+                                <?= $civil_status_filter === $status
+                                    ? "selected"
+                                    : ""
+                                ?>>
 
+                                <?= resident_report_escape(
+                                    $status
+                                ) ?>
 
-        <div
-            class="resident-report-filter"
-        >
+                            </option>
 
-            <label
-                for="age_group"
-            >
-                Age Group
-            </label>
-
-
-            <select
-                name="age_group"
-                id="age_group"
-            >
-
-                <option value="">
-                    All Age Groups
-                </option>
+                        <?php endforeach; ?>
 
 
-                <?php foreach (
-                    $allowed_age_groups
-                    as $group
-                ): ?>
+                    </select>
 
-                    <option
-                        value="<?= resident_report_escape($group) ?>"
-                        <?= $age_group_filter === $group
-                            ? "selected"
-                            : ""
-                        ?>
-                    >
-
-                        <?= resident_report_escape(
-                            $group
-                        ) ?>
-
-                    </option>
-
-                <?php endforeach; ?>
+                </div>
 
 
-            </select>
+                <div
+                    class="resident-report-filter">
 
-        </div>
-
-
-        <div
-            class="resident-report-filter"
-        >
-
-            <label
-                for="occupation"
-            >
-                Occupation
-            </label>
+                    <label
+                        for="age_group">
+                        Age Group
+                    </label>
 
 
-            <select
-                name="occupation"
-                id="occupation"
-            >
+                    <select
+                        name="age_group"
+                        id="age_group">
 
-                <option value="">
-                    All Occupations
-                </option>
-
-
-                <?php foreach (
-                    $occupation_options
-                    as $occupation
-                ): ?>
-
-                    <option
-                        value="<?= resident_report_escape($occupation) ?>"
-                        <?= $occupation_filter === $occupation
-                            ? "selected"
-                            : ""
-                        ?>
-                    >
-
-                        <?= resident_report_escape(
-                            $occupation
-                        ) ?>
-
-                    </option>
-
-                <?php endforeach; ?>
+                        <option value="">
+                            All Age Groups
+                        </option>
 
 
-            </select>
+                        <?php foreach (
+                            $allowed_age_groups
+                            as $group
+                        ): ?>
 
-        </div>
+                            <option
+                                value="<?= resident_report_escape($group) ?>"
+                                <?= $age_group_filter === $group
+                                    ? "selected"
+                                    : ""
+                                ?>>
 
+                                <?= resident_report_escape(
+                                    $group
+                                ) ?>
 
-        <div
-            class="resident-report-filter-actions"
-        >
+                            </option>
 
-            <button
-                type="submit"
-                class="btn"
-            >
-                Apply Filters
-            </button>
-
-
-            <a
-                href="reports.php"
-                class="btn"
-            >
-                Reset
-            </a>
-
-        </div>
+                        <?php endforeach; ?>
 
 
-    </form>
+                    </select>
+
+                </div>
 
 
-    <!--
+                <div
+                    class="resident-report-filter">
+
+                    <label
+                        for="occupation">
+                        Occupation
+                    </label>
+
+
+                    <select
+                        name="occupation"
+                        id="occupation">
+
+                        <option value="">
+                            All Occupations
+                        </option>
+
+
+                        <?php foreach (
+                            $occupation_options
+                            as $occupation
+                        ): ?>
+
+                            <option
+                                value="<?= resident_report_escape($occupation) ?>"
+                                <?= $occupation_filter === $occupation
+                                    ? "selected"
+                                    : ""
+                                ?>>
+
+                                <?= resident_report_escape(
+                                    $occupation
+                                ) ?>
+
+                            </option>
+
+                        <?php endforeach; ?>
+
+
+                    </select>
+
+                </div>
+
+
+                <div
+                    class="resident-report-filter-actions">
+
+                    <button
+                        type="submit"
+                        class="btn">
+                        Apply Filters
+                    </button>
+
+
+                    <a
+                        href="reports.php"
+                        class="btn">
+                        Reset
+                    </a>
+
+                </div>
+
+
+            </form>
+
+
+            <!--
     ==========================================================================
     SUMMARY CARDS
     ==========================================================================
     -->
 
-    <div
-        class="resident-report-summary"
-    >
-
-
-        <div
-            class="resident-report-card"
-        >
-
             <div
-                class="resident-report-card-label"
-            >
-                Total Residents
+                class="resident-report-summary">
+
+
+                <div
+                    class="resident-report-card">
+
+                    <div
+                        class="resident-report-card-label">
+                        Total Residents
+                    </div>
+
+
+                    <div
+                        class="resident-report-card-value">
+
+                        <?= resident_report_escape(
+                            number_format(
+                                $total_residents
+                            )
+                        ) ?>
+
+                    </div>
+
+                </div>
+
+
+                <div
+                    class="resident-report-card">
+
+                    <div
+                        class="resident-report-card-label">
+                        With Birthday
+                    </div>
+
+
+                    <div
+                        class="resident-report-card-value">
+
+                        <?= resident_report_escape(
+                            number_format(
+                                $with_birthday
+                            )
+                        ) ?>
+
+                    </div>
+
+                </div>
+
+
+                <div
+                    class="resident-report-card">
+
+                    <div
+                        class="resident-report-card-label">
+                        With Occupation
+                    </div>
+
+
+                    <div
+                        class="resident-report-card-value">
+
+                        <?= resident_report_escape(
+                            number_format(
+                                $with_occupation
+                            )
+                        ) ?>
+
+                    </div>
+
+                </div>
+
+
+                <div
+                    class="resident-report-card">
+
+                    <div
+                        class="resident-report-card-label">
+                        With Address
+                    </div>
+
+
+                    <div
+                        class="resident-report-card-value">
+
+                        <?= resident_report_escape(
+                            number_format(
+                                $with_address
+                            )
+                        ) ?>
+
+                    </div>
+
+                </div>
+
+
             </div>
 
 
-            <div
-                class="resident-report-card-value"
-            >
-
-                <?= resident_report_escape(
-                    number_format(
-                        $total_residents
-                    )
-                ) ?>
-
-            </div>
-
-        </div>
-
-
-        <div
-            class="resident-report-card"
-        >
-
-            <div
-                class="resident-report-card-label"
-            >
-                With Birthday
-            </div>
-
-
-            <div
-                class="resident-report-card-value"
-            >
-
-                <?= resident_report_escape(
-                    number_format(
-                        $with_birthday
-                    )
-                ) ?>
-
-            </div>
-
-        </div>
-
-
-        <div
-            class="resident-report-card"
-        >
-
-            <div
-                class="resident-report-card-label"
-            >
-                With Occupation
-            </div>
-
-
-            <div
-                class="resident-report-card-value"
-            >
-
-                <?= resident_report_escape(
-                    number_format(
-                        $with_occupation
-                    )
-                ) ?>
-
-            </div>
-
-        </div>
-
-
-        <div
-            class="resident-report-card"
-        >
-
-            <div
-                class="resident-report-card-label"
-            >
-                With Address
-            </div>
-
-
-            <div
-                class="resident-report-card-value"
-            >
-
-                <?= resident_report_escape(
-                    number_format(
-                        $with_address
-                    )
-                ) ?>
-
-            </div>
-
-        </div>
-
-
-    </div>
-
-
-    <!--
+            <!--
     ==========================================================================
     DISTRIBUTION REPORTS
     ==========================================================================
     -->
 
-    <div
-        class="resident-report-grid"
-    >
-
-
-        <!-- AGE -->
-
-        <section
-            class="resident-report-panel"
-        >
-
             <div
-                class="resident-report-panel-header"
-            >
-
-                <h3>
-                    Age Distribution
-                </h3>
-
-                <p>
-                    Residents grouped by age.
-                </p>
-
-            </div>
+                class="resident-report-grid">
 
 
-            <div
-                class="resident-report-panel-body"
-            >
+                <!-- AGE -->
 
+                <section
+                    class="resident-report-panel">
 
-                <?php
+                    <div
+                        class="resident-report-panel-header">
 
-                $age_values = [
+                        <h3>
+                            Age Distribution
+                        </h3>
 
-                    "0–17" =>
-                        $age_0_17,
+                        <p>
+                            Residents grouped by age.
+                        </p>
 
-                    "18–30" =>
-                        $age_18_30,
-
-                    "31–45" =>
-                        $age_31_45,
-
-                    "46–60" =>
-                        $age_46_60,
-
-                    "61+" =>
-                        $age_61_plus
-
-                ];
-
-
-                $age_max =
-                    max(
-                        $age_values ?: [1]
-                    );
-
-
-                if (
-                    $age_max <= 0
-                ) {
-
-                    $age_max = 1;
-
-                }
-
-                ?>
-
-
-                <?php foreach (
-                    $age_values
-                    as $label =>
-                    $total
-                ): ?>
-
-
-                    <?php
-
-                    $bar_width =
-                        (
-                            $total /
-                            $age_max
-                        ) * 100;
-
-                    ?>
+                    </div>
 
 
                     <div
-                        class="report-bar-row"
-                    >
-
-                        <div
-                            class="report-bar-label"
-                        >
-
-                            <?= resident_report_escape(
-                                $label
-                            ) ?>
-
-                        </div>
+                        class="resident-report-panel-body">
 
 
-                        <div
-                            class="report-bar-track"
-                        >
+                        <?php
+
+                        $age_values = [
+
+                            "0–17" =>
+                            $age_0_17,
+
+                            "18–30" =>
+                            $age_18_30,
+
+                            "31–45" =>
+                            $age_31_45,
+
+                            "46–60" =>
+                            $age_46_60,
+
+                            "61+" =>
+                            $age_61_plus
+
+                        ];
+
+
+                        $age_max =
+                            max(
+                                $age_values ?: [1]
+                            );
+
+
+                        if (
+                            $age_max <= 0
+                        ) {
+
+                            $age_max = 1;
+                        }
+
+                        ?>
+
+
+                        <?php foreach (
+                            $age_values
+                            as $label =>
+                            $total
+                        ): ?>
+
+
+                            <?php
+
+                            $bar_width =
+                                (
+                                    $total /
+                                    $age_max
+                                ) * 100;
+
+                            ?>
+
 
                             <div
-                                class="report-bar-fill"
-                                style="
+                                class="report-bar-row">
+
+                                <div
+                                    class="report-bar-label">
+
+                                    <?= resident_report_escape(
+                                        $label
+                                    ) ?>
+
+                                </div>
+
+
+                                <div
+                                    class="report-bar-track">
+
+                                    <div
+                                        class="report-bar-fill"
+                                        style="
                                     width:
                                     <?= number_format(
                                         $bar_width,
@@ -2426,53 +2308,48 @@ RESIDENT REPORT
                                         ".",
                                         ""
                                     ) ?>%;
-                                "
-                            ></div>
+                                "></div>
 
-                        </div>
-
-
-                        <div
-                            class="report-bar-value"
-                        >
-
-                            <?= resident_report_escape(
-                                number_format(
-                                    $total
-                                )
-                            ) ?>
-
-                        </div>
-
-                    </div>
+                                </div>
 
 
-                <?php endforeach; ?>
+                                <div
+                                    class="report-bar-value">
+
+                                    <?= resident_report_escape(
+                                        number_format(
+                                            $total
+                                        )
+                                    ) ?>
+
+                                </div>
+
+                            </div>
 
 
-                <?php if (
-                    $age_not_provided > 0
-                ): ?>
+                        <?php endforeach; ?>
 
 
-                    <div
-                        class="report-bar-row"
-                    >
+                        <?php if (
+                            $age_not_provided > 0
+                        ): ?>
 
-                        <div
-                            class="report-bar-label"
-                        >
-                            Not provided
-                        </div>
-
-
-                        <div
-                            class="report-bar-track"
-                        >
 
                             <div
-                                class="report-bar-fill"
-                                style="
+                                class="report-bar-row">
+
+                                <div
+                                    class="report-bar-label">
+                                    Not provided
+                                </div>
+
+
+                                <div
+                                    class="report-bar-track">
+
+                                    <div
+                                        class="report-bar-fill"
+                                        style="
                                     width:
                                     <?= number_format(
                                         (
@@ -2486,969 +2363,876 @@ RESIDENT REPORT
                                         ".",
                                         ""
                                     ) ?>%;
-                                "
-                            ></div>
+                                "></div>
 
-                        </div>
+                                </div>
 
-
-                        <div
-                            class="report-bar-value"
-                        >
-
-                            <?= resident_report_escape(
-                                number_format(
-                                    $age_not_provided
-                                )
-                            ) ?>
-
-                        </div>
-
-                    </div>
-
-
-                <?php endif; ?>
-
-
-            </div>
-
-        </section>
-
-
-        <!-- CIVIL STATUS -->
-
-        <section
-            class="resident-report-panel"
-        >
-
-            <div
-                class="resident-report-panel-header"
-            >
-
-                <h3>
-                    Civil Status
-                </h3>
-
-                <p>
-                    Distribution of registered civil statuses.
-                </p>
-
-            </div>
-
-
-            <div
-                class="resident-report-panel-body"
-            >
-
-
-                <?php
-
-                $civil_max = 1;
-
-
-                foreach (
-                    $civil_data
-                    as $item
-                ) {
-
-                    if (
-                        $item["total"] >
-                        $civil_max
-                    ) {
-
-                        $civil_max =
-                            $item["total"];
-
-                    }
-
-                }
-
-                ?>
-
-
-                <?php if (
-                    count($civil_data) > 0
-                ): ?>
-
-
-                    <?php foreach (
-                        $civil_data
-                        as $item
-                    ): ?>
-
-
-                        <?php
-
-                        $bar_width =
-                            (
-                                $item["total"] /
-                                max(
-                                    $civil_max,
-                                    1
-                                )
-                            ) * 100;
-
-                        ?>
-
-
-                        <div
-                            class="report-bar-row"
-                        >
-
-                            <div
-                                class="report-bar-label"
-                                title="<?= resident_report_escape($item["label"]) ?>"
-                            >
-
-                                <?= resident_report_escape(
-                                    $item["label"]
-                                ) ?>
-
-                            </div>
-
-
-                            <div
-                                class="report-bar-track"
-                            >
 
                                 <div
-                                    class="report-bar-fill"
-                                    style="
-                                        width:
-                                        <?= number_format(
-                                            $bar_width,
-                                            2,
-                                            ".",
-                                            ""
-                                        ) ?>%;
-                                    "
-                                ></div>
+                                    class="report-bar-value">
+
+                                    <?= resident_report_escape(
+                                        number_format(
+                                            $age_not_provided
+                                        )
+                                    ) ?>
+
+                                </div>
 
                             </div>
 
 
-                            <div
-                                class="report-bar-value"
-                            >
-
-                                <?= resident_report_escape(
-                                    number_format(
-                                        $item["total"]
-                                    )
-                                ) ?>
-
-                            </div>
-
-                        </div>
+                        <?php endif; ?>
 
 
-                    <?php endforeach; ?>
-
-
-                <?php else: ?>
-
-
-                    <div
-                        class="resident-report-empty"
-                    >
-                        No civil status data available.
                     </div>
 
-
-                <?php endif; ?>
-
-
-            </div>
-
-        </section>
+                </section>
 
 
-        <!-- OCCUPATION -->
+                <!-- CIVIL STATUS -->
 
-        <section
-            class="resident-report-panel"
-        >
-
-            <div
-                class="resident-report-panel-header"
-            >
-
-                <h3>
-                    Top Occupations
-                </h3>
-
-                <p>
-                    Most common occupations among residents.
-                </p>
-
-            </div>
-
-
-            <div
-                class="resident-report-panel-body"
-            >
-
-
-                <?php
-
-                $occupation_max = 1;
-
-
-                foreach (
-                    $occupation_data
-                    as $item
-                ) {
-
-                    if (
-                        $item["total"] >
-                        $occupation_max
-                    ) {
-
-                        $occupation_max =
-                            $item["total"];
-
-                    }
-
-                }
-
-                ?>
-
-
-                <?php if (
-                    count($occupation_data) > 0
-                ): ?>
-
-
-                    <?php foreach (
-                        $occupation_data
-                        as $item
-                    ): ?>
-
-
-                        <?php
-
-                        $bar_width =
-                            (
-                                $item["total"] /
-                                max(
-                                    $occupation_max,
-                                    1
-                                )
-                            ) * 100;
-
-                        ?>
-
-
-                        <div
-                            class="report-bar-row"
-                        >
-
-                            <div
-                                class="report-bar-label"
-                                title="<?= resident_report_escape($item["label"]) ?>"
-                            >
-
-                                <?= resident_report_escape(
-                                    $item["label"]
-                                ) ?>
-
-                            </div>
-
-
-                            <div
-                                class="report-bar-track"
-                            >
-
-                                <div
-                                    class="report-bar-fill"
-                                    style="
-                                        width:
-                                        <?= number_format(
-                                            $bar_width,
-                                            2,
-                                            ".",
-                                            ""
-                                        ) ?>%;
-                                    "
-                                ></div>
-
-                            </div>
-
-
-                            <div
-                                class="report-bar-value"
-                            >
-
-                                <?= resident_report_escape(
-                                    number_format(
-                                        $item["total"]
-                                    )
-                                ) ?>
-
-                            </div>
-
-                        </div>
-
-
-                    <?php endforeach; ?>
-
-
-                <?php else: ?>
-
+                <section
+                    class="resident-report-panel">
 
                     <div
-                        class="resident-report-empty"
-                    >
-                        No occupation data available.
-                    </div>
+                        class="resident-report-panel-header">
 
-
-                <?php endif; ?>
-
-
-            </div>
-
-        </section>
-
-
-        <!-- EMPLOYERS -->
-
-        <section
-            class="resident-report-panel"
-        >
-
-            <div
-                class="resident-report-panel-header"
-            >
-
-                <h3>
-                    Top Employers
-                </h3>
-
-                <p>
-                    Most common employers among residents.
-                </p>
-
-            </div>
-
-
-            <div
-                class="resident-report-panel-body"
-            >
-
-
-                <?php
-
-                $employer_max = 1;
-
-
-                foreach (
-                    $employer_data
-                    as $item
-                ) {
-
-                    if (
-                        $item["total"] >
-                        $employer_max
-                    ) {
-
-                        $employer_max =
-                            $item["total"];
-
-                    }
-
-                }
-
-                ?>
-
-
-                <?php if (
-                    count($employer_data) > 0
-                ): ?>
-
-
-                    <?php foreach (
-                        $employer_data
-                        as $item
-                    ): ?>
-
-
-                        <?php
-
-                        $bar_width =
-                            (
-                                $item["total"] /
-                                max(
-                                    $employer_max,
-                                    1
-                                )
-                            ) * 100;
-
-                        ?>
-
-
-                        <div
-                            class="report-bar-row"
-                        >
-
-                            <div
-                                class="report-bar-label"
-                                title="<?= resident_report_escape($item["label"]) ?>"
-                            >
-
-                                <?= resident_report_escape(
-                                    $item["label"]
-                                ) ?>
-
-                            </div>
-
-
-                            <div
-                                class="report-bar-track"
-                            >
-
-                                <div
-                                    class="report-bar-fill"
-                                    style="
-                                        width:
-                                        <?= number_format(
-                                            $bar_width,
-                                            2,
-                                            ".",
-                                            ""
-                                        ) ?>%;
-                                    "
-                                ></div>
-
-                            </div>
-
-
-                            <div
-                                class="report-bar-value"
-                            >
-
-                                <?= resident_report_escape(
-                                    number_format(
-                                        $item["total"]
-                                    )
-                                ) ?>
-
-                            </div>
-
-                        </div>
-
-
-                    <?php endforeach; ?>
-
-
-                <?php else: ?>
-
-
-                    <div
-                        class="resident-report-empty"
-                    >
-                        No employer data available.
-                    </div>
-
-
-                <?php endif; ?>
-
-
-            </div>
-
-        </section>
-
-
-        <!-- ADDRESS -->
-
-        <section
-            class="resident-report-panel resident-report-panel-full"
-        >
-
-            <div
-                class="resident-report-panel-header"
-            >
-
-                <h3>
-                    Resident Distribution by Address
-                </h3>
-
-                <p>
-                    Top 10 addresses with the highest number
-                    of registered residents.
-                </p>
-
-            </div>
-
-
-            <div
-                class="resident-report-panel-body"
-            >
-
-
-                <?php
-
-                $address_max = 1;
-
-
-                foreach (
-                    $address_data
-                    as $item
-                ) {
-
-                    if (
-                        $item["total"] >
-                        $address_max
-                    ) {
-
-                        $address_max =
-                            $item["total"];
-
-                    }
-
-                }
-
-                ?>
-
-
-                <?php if (
-                    count($address_data) > 0
-                ): ?>
-
-
-                    <?php foreach (
-                        $address_data
-                        as $item
-                    ): ?>
-
-
-                        <?php
-
-                        $bar_width =
-                            (
-                                $item["total"] /
-                                max(
-                                    $address_max,
-                                    1
-                                )
-                            ) * 100;
-
-                        ?>
-
-
-                        <div
-                            class="report-bar-row"
-                            style="
-                                grid-template-columns:
-                                220px
-                                minmax(0, 1fr)
-                                55px;
-                            "
-                        >
-
-                            <div
-                                class="report-bar-label"
-                                title="<?= resident_report_escape($item["label"]) ?>"
-                            >
-
-                                <?= resident_report_escape(
-                                    $item["label"]
-                                ) ?>
-
-                            </div>
-
-
-                            <div
-                                class="report-bar-track"
-                            >
-
-                                <div
-                                    class="report-bar-fill"
-                                    style="
-                                        width:
-                                        <?= number_format(
-                                            $bar_width,
-                                            2,
-                                            ".",
-                                            ""
-                                        ) ?>%;
-                                    "
-                                ></div>
-
-                            </div>
-
-
-                            <div
-                                class="report-bar-value"
-                            >
-
-                                <?= resident_report_escape(
-                                    number_format(
-                                        $item["total"]
-                                    )
-                                ) ?>
-
-                            </div>
-
-                        </div>
-
-
-                    <?php endforeach; ?>
-
-
-                <?php else: ?>
-
-
-                    <div
-                        class="resident-report-empty"
-                    >
-                        No address data available.
-                    </div>
-
-
-                <?php endif; ?>
-
-
-            </div>
-
-        </section>
-
-
-    </div>
-
-
-    <!--
-    ==========================================================================
-    RESIDENT DIRECTORY
-    ==========================================================================
-    -->
-
-    <section
-        class="resident-report-panel resident-report-panel-full"
-    >
-
-
-        <div
-            class="resident-report-panel-header"
-        >
-
-            <h3>
-                Resident Directory
-            </h3>
-
-            <p>
-                Residents included in the current report filters.
-            </p>
-
-        </div>
-
-
-        <div
-            class="resident-report-table-wrapper"
-        >
-
-
-            <table
-                class="resident-report-table"
-            >
-
-
-                <thead>
-
-                    <tr>
-
-                        <th>
-                            Resident No.
-                        </th>
-
-                        <th>
-                            Name
-                        </th>
-
-                        <th>
+                        <h3>
                             Civil Status
-                        </th>
+                        </h3>
 
-                        <th>
-                            Birthday
-                        </th>
+                        <p>
+                            Distribution of registered civil statuses.
+                        </p>
 
-                        <th>
-                            Age
-                        </th>
-
-                        <th>
-                            Occupation
-                        </th>
-
-                        <th>
-                            Employer
-                        </th>
-
-                        <th>
-                            Contact
-                        </th>
-
-                        <th>
-                            Address
-                        </th>
-
-                    </tr>
-
-                </thead>
+                    </div>
 
 
-                <tbody>
-
-
-                <?php if (
-                    $directory_result &&
-                    $directory_result->num_rows > 0
-                ): ?>
-
-
-                    <?php while (
-                        $resident =
-                        $directory_result->fetch_assoc()
-                    ): ?>
+                    <div
+                        class="resident-report-panel-body">
 
 
                         <?php
 
-                        $full_name =
-                            trim(
-                                $resident["first_name"] .
-                                " " .
-                                ($resident["middle_name"] ?? "") .
-                                " " .
-                                $resident["last_name"] .
-                                " " .
-                                ($resident["extension_name"] ?? "")
-                            );
+                        $civil_max = 1;
 
 
-                        if (
-                            $full_name === ""
+                        foreach (
+                            $civil_data
+                            as $item
                         ) {
 
-                            $full_name =
-                                $resident[
-                                    "resident_number"
-                                ];
+                            if (
+                                $item["total"] >
+                                $civil_max
+                            ) {
 
+                                $civil_max =
+                                    $item["total"];
+                            }
                         }
 
                         ?>
 
 
-                        <tr>
+                        <?php if (
+                            count($civil_data) > 0
+                        ): ?>
 
 
-                            <td>
-
-                                <?= resident_report_escape(
-                                    $resident[
-                                        "resident_number"
-                                    ]
-                                ) ?>
-
-                            </td>
+                            <?php foreach (
+                                $civil_data
+                                as $item
+                            ): ?>
 
 
-                            <td>
+                                <?php
 
-                                <?= resident_report_escape(
-                                    $full_name
-                                ) ?>
+                                $bar_width =
+                                    (
+                                        $item["total"] /
+                                        max(
+                                            $civil_max,
+                                            1
+                                        )
+                                    ) * 100;
 
-                            </td>
-
-
-                            <td>
-
-                                <?= !empty(
-                                    $resident[
-                                        "civil_status"
-                                    ]
-                                )
-                                    ? resident_report_escape(
-                                        $resident[
-                                            "civil_status"
-                                        ]
-                                    )
-                                    : "—"
                                 ?>
 
-                            </td>
+
+                                <div
+                                    class="report-bar-row">
+
+                                    <div
+                                        class="report-bar-label"
+                                        title="<?= resident_report_escape($item["label"]) ?>">
+
+                                        <?= resident_report_escape(
+                                            $item["label"]
+                                        ) ?>
+
+                                    </div>
 
 
-                            <td>
+                                    <div
+                                        class="report-bar-track">
 
-                                <?php if (
-                                    !empty(
-                                        $resident[
-                                            "birthday"
-                                        ]
-                                    )
+                                        <div
+                                            class="report-bar-fill"
+                                            style="
+                                        width:
+                                        <?= number_format(
+                                            $bar_width,
+                                            2,
+                                            ".",
+                                            ""
+                                        ) ?>%;
+                                    "></div>
+
+                                    </div>
+
+
+                                    <div
+                                        class="report-bar-value">
+
+                                        <?= resident_report_escape(
+                                            number_format(
+                                                $item["total"]
+                                            )
+                                        ) ?>
+
+                                    </div>
+
+                                </div>
+
+
+                            <?php endforeach; ?>
+
+
+                        <?php else: ?>
+
+
+                            <div
+                                class="resident-report-empty">
+                                No civil status data available.
+                            </div>
+
+
+                        <?php endif; ?>
+
+
+                    </div>
+
+                </section>
+
+
+                <!-- OCCUPATION -->
+
+                <section
+                    class="resident-report-panel">
+
+                    <div
+                        class="resident-report-panel-header">
+
+                        <h3>
+                            Top Occupations
+                        </h3>
+
+                        <p>
+                            Most common occupations among residents.
+                        </p>
+
+                    </div>
+
+
+                    <div
+                        class="resident-report-panel-body">
+
+
+                        <?php
+
+                        $occupation_max = 1;
+
+
+                        foreach (
+                            $occupation_data
+                            as $item
+                        ) {
+
+                            if (
+                                $item["total"] >
+                                $occupation_max
+                            ) {
+
+                                $occupation_max =
+                                    $item["total"];
+                            }
+                        }
+
+                        ?>
+
+
+                        <?php if (
+                            count($occupation_data) > 0
+                        ): ?>
+
+
+                            <?php foreach (
+                                $occupation_data
+                                as $item
+                            ): ?>
+
+
+                                <?php
+
+                                $bar_width =
+                                    (
+                                        $item["total"] /
+                                        max(
+                                            $occupation_max,
+                                            1
+                                        )
+                                    ) * 100;
+
+                                ?>
+
+
+                                <div
+                                    class="report-bar-row">
+
+                                    <div
+                                        class="report-bar-label"
+                                        title="<?= resident_report_escape($item["label"]) ?>">
+
+                                        <?= resident_report_escape(
+                                            $item["label"]
+                                        ) ?>
+
+                                    </div>
+
+
+                                    <div
+                                        class="report-bar-track">
+
+                                        <div
+                                            class="report-bar-fill"
+                                            style="
+                                        width:
+                                        <?= number_format(
+                                            $bar_width,
+                                            2,
+                                            ".",
+                                            ""
+                                        ) ?>%;
+                                    "></div>
+
+                                    </div>
+
+
+                                    <div
+                                        class="report-bar-value">
+
+                                        <?= resident_report_escape(
+                                            number_format(
+                                                $item["total"]
+                                            )
+                                        ) ?>
+
+                                    </div>
+
+                                </div>
+
+
+                            <?php endforeach; ?>
+
+
+                        <?php else: ?>
+
+
+                            <div
+                                class="resident-report-empty">
+                                No occupation data available.
+                            </div>
+
+
+                        <?php endif; ?>
+
+
+                    </div>
+
+                </section>
+
+
+                <!-- EMPLOYERS -->
+
+                <section
+                    class="resident-report-panel">
+
+                    <div
+                        class="resident-report-panel-header">
+
+                        <h3>
+                            Top Employers
+                        </h3>
+
+                        <p>
+                            Most common employers among residents.
+                        </p>
+
+                    </div>
+
+
+                    <div
+                        class="resident-report-panel-body">
+
+
+                        <?php
+
+                        $employer_max = 1;
+
+
+                        foreach (
+                            $employer_data
+                            as $item
+                        ) {
+
+                            if (
+                                $item["total"] >
+                                $employer_max
+                            ) {
+
+                                $employer_max =
+                                    $item["total"];
+                            }
+                        }
+
+                        ?>
+
+
+                        <?php if (
+                            count($employer_data) > 0
+                        ): ?>
+
+
+                            <?php foreach (
+                                $employer_data
+                                as $item
+                            ): ?>
+
+
+                                <?php
+
+                                $bar_width =
+                                    (
+                                        $item["total"] /
+                                        max(
+                                            $employer_max,
+                                            1
+                                        )
+                                    ) * 100;
+
+                                ?>
+
+
+                                <div
+                                    class="report-bar-row">
+
+                                    <div
+                                        class="report-bar-label"
+                                        title="<?= resident_report_escape($item["label"]) ?>">
+
+                                        <?= resident_report_escape(
+                                            $item["label"]
+                                        ) ?>
+
+                                    </div>
+
+
+                                    <div
+                                        class="report-bar-track">
+
+                                        <div
+                                            class="report-bar-fill"
+                                            style="
+                                        width:
+                                        <?= number_format(
+                                            $bar_width,
+                                            2,
+                                            ".",
+                                            ""
+                                        ) ?>%;
+                                    "></div>
+
+                                    </div>
+
+
+                                    <div
+                                        class="report-bar-value">
+
+                                        <?= resident_report_escape(
+                                            number_format(
+                                                $item["total"]
+                                            )
+                                        ) ?>
+
+                                    </div>
+
+                                </div>
+
+
+                            <?php endforeach; ?>
+
+
+                        <?php else: ?>
+
+
+                            <div
+                                class="resident-report-empty">
+                                No employer data available.
+                            </div>
+
+
+                        <?php endif; ?>
+
+
+                    </div>
+
+                </section>
+
+
+                <!-- ADDRESS -->
+
+                <section
+                    class="resident-report-panel resident-report-panel-full">
+
+                    <div
+                        class="resident-report-panel-header">
+
+                        <h3>
+                            Resident Distribution by Address
+                        </h3>
+
+                        <p>
+                            Top 10 addresses with the highest number
+                            of registered residents.
+                        </p>
+
+                    </div>
+
+
+                    <div
+                        class="resident-report-panel-body">
+
+
+                        <?php
+
+                        $address_max = 1;
+
+
+                        foreach (
+                            $address_data
+                            as $item
+                        ) {
+
+                            if (
+                                $item["total"] >
+                                $address_max
+                            ) {
+
+                                $address_max =
+                                    $item["total"];
+                            }
+                        }
+
+                        ?>
+
+
+                        <?php if (
+                            count($address_data) > 0
+                        ): ?>
+
+
+                            <?php foreach (
+                                $address_data
+                                as $item
+                            ): ?>
+
+
+                                <?php
+
+                                $bar_width =
+                                    (
+                                        $item["total"] /
+                                        max(
+                                            $address_max,
+                                            1
+                                        )
+                                    ) * 100;
+
+                                ?>
+
+
+                                <div
+                                    class="report-bar-row"
+                                    style="
+                                grid-template-columns:
+                                220px
+                                minmax(0, 1fr)
+                                55px;
+                            ">
+
+                                    <div
+                                        class="report-bar-label"
+                                        title="<?= resident_report_escape($item["label"]) ?>">
+
+                                        <?= resident_report_escape(
+                                            $item["label"]
+                                        ) ?>
+
+                                    </div>
+
+
+                                    <div
+                                        class="report-bar-track">
+
+                                        <div
+                                            class="report-bar-fill"
+                                            style="
+                                        width:
+                                        <?= number_format(
+                                            $bar_width,
+                                            2,
+                                            ".",
+                                            ""
+                                        ) ?>%;
+                                    "></div>
+
+                                    </div>
+
+
+                                    <div
+                                        class="report-bar-value">
+
+                                        <?= resident_report_escape(
+                                            number_format(
+                                                $item["total"]
+                                            )
+                                        ) ?>
+
+                                    </div>
+
+                                </div>
+
+
+                            <?php endforeach; ?>
+
+
+                        <?php else: ?>
+
+
+                            <div
+                                class="resident-report-empty">
+                                No address data available.
+                            </div>
+
+
+                        <?php endif; ?>
+
+
+                    </div>
+
+                </section>
+
+
+            </div>
+
+
+            <!--
+    ==========================================================================
+    RESIDENT DIRECTORY
+    ==========================================================================
+    -->
+
+            <section
+                class="resident-report-panel resident-report-panel-full">
+
+
+                <div
+                    class="resident-report-panel-header">
+
+                    <h3>
+                        Resident Directory
+                    </h3>
+
+                    <p>
+                        Residents included in the current report filters.
+                    </p>
+
+                </div>
+
+
+                <div
+                    class="resident-report-table-wrapper">
+
+
+                    <table
+                        class="resident-report-table">
+
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    Resident No.
+                                </th>
+
+                                <th>
+                                    Name
+                                </th>
+
+                                <th>
+                                    Civil Status
+                                </th>
+
+                                <th>
+                                    Birthday
+                                </th>
+
+                                <th>
+                                    Age
+                                </th>
+
+                                <th>
+                                    Occupation
+                                </th>
+
+                                <th>
+                                    Employer
+                                </th>
+
+                                <th>
+                                    Contact
+                                </th>
+
+                                <th>
+                                    Address
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+
+                            <?php if (
+                                $directory_result &&
+                                $directory_result->num_rows > 0
+                            ): ?>
+
+
+                                <?php while (
+                                    $resident =
+                                    $directory_result->fetch_assoc()
                                 ): ?>
 
-                                    <?= resident_report_escape(
-                                        date(
-                                            "M d, Y",
-                                            strtotime(
-                                                $resident[
-                                                    "birthday"
-                                                ]
+
+                                    <?php
+
+                                    $full_name =
+                                        trim(
+                                            $resident["first_name"] .
+                                                " " .
+                                                ($resident["middle_name"] ?? "") .
+                                                " " .
+                                                $resident["last_name"] .
+                                                " " .
+                                                ($resident["extension_name"] ?? "")
+                                        );
+
+
+                                    if (
+                                        $full_name === ""
+                                    ) {
+
+                                        $full_name =
+                                            $resident["resident_number"];
+                                    }
+
+                                    ?>
+
+
+                                    <tr>
+
+
+                                        <td>
+
+                                            <?= resident_report_escape(
+                                                $resident["resident_number"]
+                                            ) ?>
+
+                                        </td>
+
+
+                                        <td>
+
+                                            <?= resident_report_escape(
+                                                $full_name
+                                            ) ?>
+
+                                        </td>
+
+
+                                        <td>
+
+                                            <?= !empty($resident["civil_status"])
+                                                ? resident_report_escape(
+                                                    $resident["civil_status"]
+                                                )
+                                                : "—"
+                                            ?>
+
+                                        </td>
+
+
+                                        <td>
+
+                                            <?php if (
+                                                !empty($resident["birthday"])
+                                            ): ?>
+
+                                                <?= resident_report_escape(
+                                                    date(
+                                                        "M d, Y",
+                                                        strtotime(
+                                                            $resident["birthday"]
+                                                        )
+                                                    )
+                                                ) ?>
+
+                                            <?php else: ?>
+
+                                                —
+
+                                            <?php endif; ?>
+
+                                        </td>
+
+
+                                        <td>
+
+                                            <?= (
+                                                $resident["age"] !== null &&
+                                                $resident["age"] !== ""
                                             )
-                                        )
-                                    ) ?>
+                                                ? resident_report_escape(
+                                                    $resident["age"]
+                                                )
+                                                : "—"
+                                            ?>
 
-                                <?php else: ?>
-
-                                    —
-
-                                <?php endif; ?>
-
-                            </td>
+                                        </td>
 
 
-                            <td>
+                                        <td>
 
-                                <?= (
-                                    $resident["age"] !== null &&
-                                    $resident["age"] !== ""
-                                )
-                                    ? resident_report_escape(
-                                        $resident["age"]
-                                    )
-                                    : "—"
-                                ?>
+                                            <?= !empty($resident["occupation"])
+                                                ? resident_report_escape(
+                                                    $resident["occupation"]
+                                                )
+                                                : "—"
+                                            ?>
 
-                            </td>
+                                        </td>
 
 
-                            <td>
+                                        <td>
 
-                                <?= !empty(
-                                    $resident[
-                                        "occupation"
-                                    ]
-                                )
-                                    ? resident_report_escape(
-                                        $resident[
-                                            "occupation"
-                                        ]
-                                    )
-                                    : "—"
-                                ?>
+                                            <?= !empty($resident["employer"])
+                                                ? resident_report_escape(
+                                                    $resident["employer"]
+                                                )
+                                                : "—"
+                                            ?>
 
-                            </td>
+                                        </td>
 
 
-                            <td>
+                                        <td>
 
-                                <?= !empty(
-                                    $resident[
-                                        "employer"
-                                    ]
-                                )
-                                    ? resident_report_escape(
-                                        $resident[
-                                            "employer"
-                                        ]
-                                    )
-                                    : "—"
-                                ?>
+                                            <?= !empty($resident["contact_number"])
+                                                ? resident_report_escape(
+                                                    $resident["contact_number"]
+                                                )
+                                                : "—"
+                                            ?>
 
-                            </td>
+                                        </td>
 
 
-                            <td>
+                                        <td>
 
-                                <?= !empty(
-                                    $resident[
-                                        "contact_number"
-                                    ]
-                                )
-                                    ? resident_report_escape(
-                                        $resident[
-                                            "contact_number"
-                                        ]
-                                    )
-                                    : "—"
-                                ?>
+                                            <?= !empty($resident["address"])
+                                                ? resident_report_escape(
+                                                    $resident["address"]
+                                                )
+                                                : "—"
+                                            ?>
 
-                            </td>
+                                        </td>
 
 
-                            <td>
-
-                                <?= !empty(
-                                    $resident[
-                                        "address"
-                                    ]
-                                )
-                                    ? resident_report_escape(
-                                        $resident[
-                                            "address"
-                                        ]
-                                    )
-                                    : "—"
-                                ?>
-
-                            </td>
+                                    </tr>
 
 
-                        </tr>
+                                <?php endwhile; ?>
 
 
-                    <?php endwhile; ?>
+                            <?php else: ?>
 
 
-                <?php else: ?>
+                                <tr>
+
+                                    <td
+                                        colspan="9"
+                                        class="resident-report-empty">
+
+                                        No residents match the selected filters.
+
+                                    </td>
+
+                                </tr>
 
 
-                    <tr>
-
-                        <td
-                            colspan="9"
-                            class="resident-report-empty"
-                        >
-
-                            No residents match the selected filters.
-
-                        </td>
-
-                    </tr>
+                            <?php endif; ?>
 
 
-                <?php endif; ?>
+                        </tbody>
 
 
-                </tbody>
+                    </table>
 
 
-            </table>
+                </div>
+
+
+            </section>
 
 
         </div>
 
 
-    </section>
+    </div>
 
 
-</div>
+    <script src="../assets/js/script.js"></script>
 
 
-</div>
-
-
-<script src="../assets/js/script.js"></script>
-
-
-<script>
-
-/*
+    <script>
+        /*
 |--------------------------------------------------------------------------
 | Resident Report Print
 |--------------------------------------------------------------------------
@@ -3457,56 +3241,53 @@ RESIDENT REPORT
 |--------------------------------------------------------------------------
 */
 
-document.addEventListener(
-    "DOMContentLoaded",
-    function () {
+        document.addEventListener(
+            "DOMContentLoaded",
+            function() {
 
-        const printResidentReport =
-            document.getElementById(
-                "printResidentReport"
-            );
+                const printResidentReport =
+                    document.getElementById(
+                        "printResidentReport"
+                    );
 
 
-        if (
-            printResidentReport
-        ) {
+                if (
+                    printResidentReport
+                ) {
 
-            printResidentReport.addEventListener(
-                "click",
-                function () {
+                    printResidentReport.addEventListener(
+                        "click",
+                        function() {
+
+                            window.print();
+
+                        }
+                    );
+
+                }
+
+            }
+        );
+    </script>
+
+
+    <?php if (
+        isset($_GET["print"]) &&
+        $_GET["print"] === "1"
+    ): ?>
+
+        <script>
+            window.addEventListener(
+                "load",
+                function() {
 
                     window.print();
 
                 }
             );
+        </script>
 
-        }
-
-    }
-);
-
-</script>
-
-
-<?php if (
-    isset($_GET["print"]) &&
-    $_GET["print"] === "1"
-): ?>
-
-<script>
-
-window.addEventListener(
-    "load",
-    function () {
-
-        window.print();
-
-    }
-);
-
-</script>
-
-<?php endif; ?>
+    <?php endif; ?>
 
 
 </body>
