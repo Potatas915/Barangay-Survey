@@ -13,7 +13,7 @@ require_staff_login();
 
 $resident_id =
     (int) (
-        $_GET["resident_id"]
+        $_GET["resident_id"]    
         ?? $_POST["resident_id"]
         ?? 0
     );

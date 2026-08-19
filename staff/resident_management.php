@@ -709,7 +709,7 @@ REGISTERED RESIDENTS HEADER
         -->
 
 
-        <div class="resident-row-actions">
+        <div class="table-actions">
 
 
             <a
