@@ -3347,7 +3347,7 @@ include __DIR__ . "/../includes/staff_topbar.php";
         </div>
 
 
-        <button
+                <button
             type="submit"
             style="margin-top:20px;"
         >
@@ -3355,18 +3355,19 @@ include __DIR__ . "/../includes/staff_topbar.php";
         </button>
 
 
-        <button type="button" class="btn btn-secondary" onclick="openConfirmModal({url: 'resident_management.php', title: 'Discard these changes?', message: 'Any edits you made to this survey will be lost.', confirmLabel: 'Discard', danger: true})">Cancel</button>
-<div class="modal-overlay" id="confirmModal">
-    <div class="modal-box modal-sm">
-        <div class="modal-icon" id="confirmModalIcon"></div>
-        <h3 id="confirmModalTitle">Are you sure?</h3>
-        <p class="modal-message" id="confirmModalMessage"></p>
-        <div class="modal-actions">
-            <button type="button" class="btn btn-secondary" onclick="closeConfirmModal()">Cancel</button>
-            <button type="button" class="btn btn-danger" id="confirmModalConfirmBtn" onclick="proceedConfirmModal()">Confirm</button>
-        </div>
-    </div>
-
+        <button
+            type="button"
+            class="btn btn-secondary"
+            onclick="openConfirmModal({
+                url: 'resident_management.php',
+                title: 'Discard these changes?',
+                message: 'Any edits you made to this survey will be lost.',
+                confirmLabel: 'Discard',
+                danger: true
+            })"
+        >
+            Cancel
+        </button>
 
     </form>
 
@@ -3464,11 +3465,15 @@ include __DIR__ . "/../includes/staff_topbar.php";
                         <td>
 
                             <?=
+
                                 $c["age"] !== null
+
                                     ? e(
                                         $c["age"]
                                     )
+
                                     : "&mdash;"
+
                             ?>
 
                         </td>
@@ -3562,6 +3567,69 @@ include __DIR__ . "/../includes/staff_topbar.php";
 
 </div>
 
+
+</div>
+
+
+<!-- =========================================================
+     CONFIRMATION MODAL
+     =========================================================
+     
+     IMPORTANT:
+     This modal is intentionally OUTSIDE all cards and forms.
+     Keeping it directly under <body> allows the fixed overlay
+     and backdrop-filter to cover the entire viewport.
+     ========================================================= -->
+
+<div
+    class="modal-overlay"
+    id="confirmModal"
+>
+
+    <div class="modal-box modal-sm">
+
+        <div
+            class="modal-icon"
+            id="confirmModalIcon"
+        ></div>
+
+
+        <h3
+            id="confirmModalTitle"
+        >
+            Are you sure?
+        </h3>
+
+
+        <p
+            class="modal-message"
+            id="confirmModalMessage"
+        ></p>
+
+
+        <div class="modal-actions">
+
+            <button
+                type="button"
+                class="btn btn-secondary"
+                onclick="closeConfirmModal()"
+            >
+                Cancel
+            </button>
+
+
+            <button
+                type="button"
+                class="btn btn-danger"
+                id="confirmModalConfirmBtn"
+                onclick="proceedConfirmModal()"
+            >
+                Confirm
+            </button>
+
+        </div>
+
+    </div>
 
 </div>
 

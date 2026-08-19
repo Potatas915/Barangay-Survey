@@ -721,11 +721,10 @@ button:active, .btn:active { transform: translateY(0); }
    ========================================================= */
 
 table {
-    width: 100%;
     border-collapse: separate;
     border-spacing: 0;
     margin-top: 14px;
-    overflow: hidden;
+    overflow: auto;
 }
 
 /* Wrap a <table> in <div class="table-scroll">...</div> in
@@ -746,20 +745,25 @@ th, td {
     font-size: 13.5px;
 }
 
+tr{
+    width: 500px;
+}
+
+
 th {
     background: var(--blue-50);
     color: var(--blue-700);
     font-weight: 700;
     font-size: 12px;
     text-transform: uppercase;
-    letter-spacing: .4px;
+    width: 500px;
+
 }
+
 
 th:first-child { border-radius: 12px 0 0 12px; }
 th:last-child { border-radius: 0 12px 12px 0; }
-
-tbody tr { transition: background .15s ease; }
-tbody tr:hover { background: var(--blue-50); }
+tbody tr { transition: background .15s ease;  }
 tbody tr td { border-bottom: 1px solid var(--line); }
 
 /* =========================================================
@@ -1341,7 +1345,7 @@ html[data-theme="dark"] .theme-switch-icon.moon { color: #c2c9ff; }
     backdrop-filter: blur(3px);
     align-items: center;
     justify-content: center;
-    z-index: 100;
+    z-index: 9999;
 }
 
 .modal-overlay.open {
