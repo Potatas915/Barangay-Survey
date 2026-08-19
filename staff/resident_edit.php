@@ -580,6 +580,9 @@ function build_edit_snapshot(
             "extension_name" =>
                 $resident["extension_name"],
 
+            "gender" =>
+                $resident["gender"] ?? null,
+
             "civil_status" =>
                 $resident["civil_status"],
 
@@ -851,6 +854,13 @@ if (
         );
 
 
+    $gender =
+        trim(
+            $_POST["gender"]
+            ?? ""
+        );
+
+
     $civil_status =
         trim(
             $_POST["civil_status"]
@@ -1055,6 +1065,25 @@ if (
 
         $error =
             "Extension name contains invalid characters.";
+
+    }
+
+
+    elseif (
+        $gender !== ""
+        &&
+        !in_array(
+            $gender,
+            [
+                "Male",
+                "Female"
+            ],
+            true
+        )
+    ) {
+
+        $error =
+            "Please select a valid gender.";
 
     }
 
@@ -1280,6 +1309,12 @@ if (
                     : null;
 
 
+            $gender_sql =
+                $gender !== ""
+                    ? $gender
+                    : null;
+
+
             $civil_status_sql =
                 $civil_status !== ""
                     ? $civil_status
@@ -1395,6 +1430,7 @@ if (
                         middle_name = ?,
                         last_name = ?,
                         extension_name = ?,
+                        gender = ?,
                         civil_status = ?,
                         email = ?,
                         contact_number = ?,
@@ -1427,12 +1463,13 @@ if (
 
 
             $stmt->bind_param(
-                "ssssssssssissssssssssssi",
+                "sssssssssssissssssssssssi",
                 $resident_number,
                 $first_name,
                 $middle_name_sql,
                 $last_name,
                 $extension_name_sql,
+                $gender_sql,
                 $civil_status_sql,
                 $email_sql,
                 $contact_number_sql,
@@ -2852,6 +2889,56 @@ include __DIR__ . "/../includes/staff_topbar.php";
                     ) ?>"
                     placeholder="Jr., Sr., III, etc."
                 >
+
+            </div>
+
+
+            <div class="register-field">
+
+                <label>
+                    Gender
+                </label>
+
+
+                <select
+                    name="gender"
+                >
+
+                    <option value="">
+                        -- Select --
+                    </option>
+
+
+                    <option
+                        value="Male"
+                        <?= (
+                            ($resident["gender"] ?? "")
+                            ===
+                            "Male"
+                        )
+                            ? "selected"
+                            : ""
+                        ?>
+                    >
+                        Male
+                    </option>
+
+
+                    <option
+                        value="Female"
+                        <?= (
+                            ($resident["gender"] ?? "")
+                            ===
+                            "Female"
+                        )
+                            ? "selected"
+                            : ""
+                        ?>
+                    >
+                        Female
+                    </option>
+
+                </select>
 
             </div>
 

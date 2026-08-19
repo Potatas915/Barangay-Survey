@@ -5,10 +5,11 @@
 -- Includes:
 --   1. Original Barangay Survey database structure
 --   2. Act 5 - Set A resident information fields
---   3. Resident children
---   4. Resident update history
---   5. Before/After change storage
---   6. Staff / Resident update tracking
+--   3. Gender (Male / Female)
+--   4. Resident children
+--   5. Resident update history
+--   6. Before/After change storage
+--   7. Staff / Resident update tracking
 --
 -- IMPORT THIS FILE ONCE IN PHPMYADMIN
 -- =========================================================
@@ -40,6 +41,11 @@ CREATE TABLE IF NOT EXISTS residents (
     middle_name VARCHAR(50),
 
     extension_name VARCHAR(10),
+
+    gender ENUM(
+        'Male',
+        'Female'
+    ) DEFAULT NULL,
 
     civil_status ENUM(
         'Single',
@@ -456,6 +462,12 @@ WHERE NOT EXISTS (
 -- These are inserted only when their resident number
 -- does not already exist.
 --
+-- Gender is not assigned to these existing sample residents
+-- because the original SQL does not specify their gender.
+--
+-- New residents registered through register.php will have
+-- either Male or Female saved in the gender column.
+--
 -- =========================================================
 
 INSERT INTO residents (
@@ -480,9 +492,11 @@ SELECT
     1
 
 WHERE NOT EXISTS (
+
     SELECT 1
     FROM residents
     WHERE resident_number = '2026-0001'
+
 );
 
 
@@ -508,9 +522,11 @@ SELECT
     1
 
 WHERE NOT EXISTS (
+
     SELECT 1
     FROM residents
     WHERE resident_number = '2026-0002'
+
 );
 
 
@@ -536,9 +552,11 @@ SELECT
     1
 
 WHERE NOT EXISTS (
+
     SELECT 1
     FROM residents
     WHERE resident_number = '2026-0003'
+
 );
 
 
@@ -564,9 +582,11 @@ SELECT
     1
 
 WHERE NOT EXISTS (
+
     SELECT 1
     FROM residents
     WHERE resident_number = '2026-0004'
+
 );
 
 
@@ -592,9 +612,11 @@ SELECT
     1
 
 WHERE NOT EXISTS (
+
     SELECT 1
     FROM residents
     WHERE resident_number = '2026-0005'
+
 );
 
 
@@ -623,13 +645,14 @@ WHERE NOT EXISTS (
 
     SELECT 1
     FROM surveys
-    WHERE title = 'Barangay Health Services Feedback'
+    WHERE title =
+        'Barangay Health Services Feedback'
 
 );
 
 
 -- =========================================================
--- SAMPLE QUESTIONS
+-- SAMPLE SURVEY QUESTIONS
 -- =========================================================
 
 INSERT INTO survey_questions (
@@ -649,14 +672,15 @@ SELECT
 
 FROM surveys
 
-WHERE title = 'Barangay Health Services Feedback'
+WHERE title =
+    'Barangay Health Services Feedback'
 
 AND NOT EXISTS (
 
     SELECT 1
-    FROM survey_questions q
-    WHERE q.survey_id = surveys.survey_id
-    AND q.question_order = 1
+    FROM survey_questions sq
+    WHERE sq.survey_id = surveys.survey_id
+    AND sq.question_order = 1
 
 );
 
@@ -678,14 +702,15 @@ SELECT
 
 FROM surveys
 
-WHERE title = 'Barangay Health Services Feedback'
+WHERE title =
+    'Barangay Health Services Feedback'
 
 AND NOT EXISTS (
 
     SELECT 1
-    FROM survey_questions q
-    WHERE q.survey_id = surveys.survey_id
-    AND q.question_order = 2
+    FROM survey_questions sq
+    WHERE sq.survey_id = surveys.survey_id
+    AND sq.question_order = 2
 
 );
 
@@ -707,14 +732,15 @@ SELECT
 
 FROM surveys
 
-WHERE title = 'Barangay Health Services Feedback'
+WHERE title =
+    'Barangay Health Services Feedback'
 
 AND NOT EXISTS (
 
     SELECT 1
-    FROM survey_questions q
-    WHERE q.survey_id = surveys.survey_id
-    AND q.question_order = 3
+    FROM survey_questions sq
+    WHERE sq.survey_id = surveys.survey_id
+    AND sq.question_order = 3
 
 );
 
@@ -736,14 +762,15 @@ SELECT
 
 FROM surveys
 
-WHERE title = 'Barangay Health Services Feedback'
+WHERE title =
+    'Barangay Health Services Feedback'
 
 AND NOT EXISTS (
 
     SELECT 1
-    FROM survey_questions q
-    WHERE q.survey_id = surveys.survey_id
-    AND q.question_order = 4
+    FROM survey_questions sq
+    WHERE sq.survey_id = surveys.survey_id
+    AND sq.question_order = 4
 
 );
 
@@ -765,13 +792,16 @@ SELECT
 
 FROM survey_questions
 
-WHERE question_text =
-    'How satisfied are you with the health center services?'
+WHERE question_order = 1
 
 AND NOT EXISTS (
+
     SELECT 1
     FROM survey_choices sc
-    WHERE sc.question_id = survey_questions.question_id
+    WHERE sc.question_id =
+        survey_questions.question_id
+    AND sc.choice_order = 1
+
 );
 
 
@@ -788,14 +818,16 @@ SELECT
 
 FROM survey_questions
 
-WHERE question_text =
-    'How satisfied are you with the health center services?'
+WHERE question_order = 1
 
 AND NOT EXISTS (
+
     SELECT 1
     FROM survey_choices sc
-    WHERE sc.question_id = survey_questions.question_id
+    WHERE sc.question_id =
+        survey_questions.question_id
     AND sc.choice_order = 2
+
 );
 
 
@@ -812,14 +844,16 @@ SELECT
 
 FROM survey_questions
 
-WHERE question_text =
-    'How satisfied are you with the health center services?'
+WHERE question_order = 1
 
 AND NOT EXISTS (
+
     SELECT 1
     FROM survey_choices sc
-    WHERE sc.question_id = survey_questions.question_id
+    WHERE sc.question_id =
+        survey_questions.question_id
     AND sc.choice_order = 3
+
 );
 
 
@@ -836,14 +870,16 @@ SELECT
 
 FROM survey_questions
 
-WHERE question_text =
-    'How satisfied are you with the health center services?'
+WHERE question_order = 1
 
 AND NOT EXISTS (
+
     SELECT 1
     FROM survey_choices sc
-    WHERE sc.question_id = survey_questions.question_id
+    WHERE sc.question_id =
+        survey_questions.question_id
     AND sc.choice_order = 4
+
 );
 
 
@@ -860,14 +896,16 @@ SELECT
 
 FROM survey_questions
 
-WHERE question_text =
-    'How satisfied are you with the health center services?'
+WHERE question_order = 1
 
 AND NOT EXISTS (
+
     SELECT 1
     FROM survey_choices sc
-    WHERE sc.question_id = survey_questions.question_id
+    WHERE sc.question_id =
+        survey_questions.question_id
     AND sc.choice_order = 5
+
 );
 
 
@@ -884,13 +922,16 @@ SELECT
 
 FROM survey_questions
 
-WHERE question_text =
-    'Have you availed of a free check-up in the past 6 months?'
+WHERE question_order = 2
 
 AND NOT EXISTS (
+
     SELECT 1
     FROM survey_choices sc
-    WHERE sc.question_id = survey_questions.question_id
+    WHERE sc.question_id =
+        survey_questions.question_id
+    AND sc.choice_order = 1
+
 );
 
 
@@ -907,14 +948,16 @@ SELECT
 
 FROM survey_questions
 
-WHERE question_text =
-    'Have you availed of a free check-up in the past 6 months?'
+WHERE question_order = 2
 
 AND NOT EXISTS (
+
     SELECT 1
     FROM survey_choices sc
-    WHERE sc.question_id = survey_questions.question_id
+    WHERE sc.question_id =
+        survey_questions.question_id
     AND sc.choice_order = 2
+
 );
 
 
@@ -931,13 +974,16 @@ SELECT
 
 FROM survey_questions
 
-WHERE question_text =
-    'Which service do you use most often?'
+WHERE question_order = 3
 
 AND NOT EXISTS (
+
     SELECT 1
     FROM survey_choices sc
-    WHERE sc.question_id = survey_questions.question_id
+    WHERE sc.question_id =
+        survey_questions.question_id
+    AND sc.choice_order = 1
+
 );
 
 
@@ -954,14 +1000,16 @@ SELECT
 
 FROM survey_questions
 
-WHERE question_text =
-    'Which service do you use most often?'
+WHERE question_order = 3
 
 AND NOT EXISTS (
+
     SELECT 1
     FROM survey_choices sc
-    WHERE sc.question_id = survey_questions.question_id
+    WHERE sc.question_id =
+        survey_questions.question_id
     AND sc.choice_order = 2
+
 );
 
 
@@ -978,14 +1026,16 @@ SELECT
 
 FROM survey_questions
 
-WHERE question_text =
-    'Which service do you use most often?'
+WHERE question_order = 3
 
 AND NOT EXISTS (
+
     SELECT 1
     FROM survey_choices sc
-    WHERE sc.question_id = survey_questions.question_id
+    WHERE sc.question_id =
+        survey_questions.question_id
     AND sc.choice_order = 3
+
 );
 
 
@@ -1002,32 +1052,19 @@ SELECT
 
 FROM survey_questions
 
-WHERE question_text =
-    'Which service do you use most often?'
+WHERE question_order = 3
 
 AND NOT EXISTS (
+
     SELECT 1
     FROM survey_choices sc
-    WHERE sc.question_id = survey_questions.question_id
+    WHERE sc.question_id =
+        survey_questions.question_id
     AND sc.choice_order = 4
+
 );
 
 
 -- =========================================================
--- VERIFICATION
--- =========================================================
-
-SELECT
-    'resident_update_history table created successfully'
-    AS status;
-
-DESCRIBE resident_update_history;
-
-SELECT
-    COUNT(*) AS history_records
-FROM resident_update_history;
-
-
--- =========================================================
--- END
+-- END OF DATABASE
 -- =========================================================
