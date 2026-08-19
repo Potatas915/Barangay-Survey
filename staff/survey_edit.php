@@ -85,7 +85,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             <a href="question_management.php?survey_id=<?= (int)$survey["survey_id"] ?>">Questions</a>
             from the Survey Management list.
         </p>
+
+
+
+
+        
     </div>
+
+
+
+    
 </div>
 
 <div class="modal-overlay" id="confirmModal">
@@ -99,6 +108,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         </div>
     </div>
 </div>
+
+
+
+
 
 <script src="../assets/js/script.js"></script>
 <script>

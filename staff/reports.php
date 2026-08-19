@@ -1112,18 +1112,16 @@ while (
 
 
         .resident-report-filter-actions {
-
             display: flex;
-
             align-items: flex-end;
-
             gap: 8px;
+            text-align: center; 
+    
 
         }
 
 
         .resident-report-filter-actions .btn {
-
             flex: 1;
 
         }

@@ -2505,10 +2505,10 @@ include __DIR__ . "/../includes/staff_topbar.php";
     </div>
 
 
-    <div class="table-actions">
+    <div class="table-actions-res-edit">
 
         <a
-            class="btn btn-secondary"
+            class="btn"
             href="resident_view.php?resident_id=<?= $resident_id ?>"
         >
             View / Print
@@ -2516,7 +2516,7 @@ include __DIR__ . "/../includes/staff_topbar.php";
 
 
         <a
-            class="btn btn-secondary"
+            class="btn"
             href="resident_management.php"
         >
             Back to List
@@ -3268,12 +3268,18 @@ include __DIR__ . "/../includes/staff_topbar.php";
         </button>
 
 
-        <a
-            href="resident_management.php"
-            class="btn btn-secondary"
-        >
-            Cancel
-        </a>
+        <button type="button" class="btn btn-secondary" onclick="openConfirmModal({url: 'resident_management.php', title: 'Discard these changes?', message: 'Any edits you made to this survey will be lost.', confirmLabel: 'Discard', danger: true})">Cancel</button>
+<div class="modal-overlay" id="confirmModal">
+    <div class="modal-box modal-sm">
+        <div class="modal-icon" id="confirmModalIcon"></div>
+        <h3 id="confirmModalTitle">Are you sure?</h3>
+        <p class="modal-message" id="confirmModalMessage"></p>
+        <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" onclick="closeConfirmModal()">Cancel</button>
+            <button type="button" class="btn btn-danger" id="confirmModalConfirmBtn" onclick="proceedConfirmModal()">Confirm</button>
+        </div>
+    </div>
+
 
     </form>
 

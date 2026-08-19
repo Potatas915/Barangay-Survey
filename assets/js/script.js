@@ -497,3 +497,56 @@ document.addEventListener("DOMContentLoaded", () => {
                     : "Collapse sidebar";
         });
 });
+
+// =========================================================
+// CANCEL CONFIRMATION FOR CHANGED FORMS
+// =========================================================
+
+// Protect Cancel buttons on editable forms. Existing custom confirmation
+// modals are left untouched, so users do not receive duplicate prompts.
+document.addEventListener("DOMContentLoaded", () => {
+    const forms = Array.from(document.querySelectorAll("form"));
+
+    const snapshotForm = (form) => {
+        return Array.from(form.elements)
+            .filter(element => element.name && !element.disabled)
+            .map(element => {
+                if (element.type === "file") {
+                    return [element.name, element.files.length ? Array.from(element.files).map(file => file.name).join(",") : ""];
+                }
+
+                if (element.type === "checkbox" || element.type === "radio") {
+                    return [element.name, element.type, element.value, element.checked ? "1" : "0"];
+                }
+
+                return [element.name, element.value];
+            });
+    };
+
+    const snapshots = new WeakMap();
+    forms.forEach(form => snapshots.set(form, JSON.stringify(snapshotForm(form))));
+
+    const formHasChanged = (form) => {
+        return snapshots.get(form) !== JSON.stringify(snapshotForm(form));
+    };
+
+    document.addEventListener("click", (event) => {
+        const cancelControl = event.target.closest("a, button, input[type='button'], input[type='reset']");
+        if (!cancelControl) return;
+
+        const label = (cancelControl.textContent || cancelControl.value || "").trim().toLowerCase();
+        if (label !== "cancel") return;
+
+        // Existing confirmation modal controls should keep their current behavior.
+        if (cancelControl.closest(".modal-overlay")) return;
+        if (cancelControl.hasAttribute("onclick") && cancelControl.getAttribute("onclick").includes("openConfirmModal")) return;
+
+        const form = cancelControl.closest("form");
+        if (!form || !formHasChanged(form)) return;
+
+        if (!window.confirm("Are you sure you want to cancel? Your changes will be lost.")) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+        }
+    }, true);
+});

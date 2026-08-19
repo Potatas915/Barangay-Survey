@@ -1786,11 +1786,11 @@ RESIDENT PROFILE HEADER
 
 
     <div
-        class="table-actions"
+        class="table-actions-res"
     >
 
         <a
-            class="btn btn-secondary"
+            class="btn"
             href="resident_edit.php?resident_id=<?= $resident_id ?>"
         >
             Edit Record
@@ -1798,7 +1798,7 @@ RESIDENT PROFILE HEADER
 
 
         <a
-            class="btn btn-secondary"
+            class="btn"
             href="resident_management.php"
         >
             Back to List

@@ -1,4 +1,5 @@
 <?php
+date_default_timezone_set("Asia/Manila");
 session_start();
 require_once __DIR__ . "/../config/database.php";
 
@@ -177,4 +178,4 @@ function sparkline_svg($points, $width = 90, $height = 32, $color = "#1fae82") {
         . '<circle cx="' . $lastX . '" cy="' . $lastY . '" r="2.5" fill="' . $color . '"/>'
         . '</svg>';
 }
-?>
+?>  
