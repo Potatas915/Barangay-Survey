@@ -74,6 +74,11 @@ $occupation_filter =
     ? trim($_GET["occupation"])
     : "";
 
+$gender_filter =
+    isset($_GET["gender"])
+    ? trim($_GET["gender"])
+    : "";
+
 
 /*
 |--------------------------------------------------------------------------
@@ -96,6 +101,12 @@ $allowed_age_groups = [
     "31-45",
     "46-60",
     "61+"
+];
+
+
+$allowed_genders = [
+    "Male",
+    "Female"
 ];
 
 
@@ -131,6 +142,19 @@ if (
 }
 
 
+if (
+    $gender_filter !== "" &&
+    !in_array(
+        $gender_filter,
+        $allowed_genders,
+        true
+    )
+) {
+
+    $gender_filter = "";
+}
+
+
 /*
 |--------------------------------------------------------------------------
 | Build Resident WHERE Clause
@@ -161,6 +185,26 @@ if (
 
     $params[] =
         $civil_status_filter;
+
+    $types .= "s";
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| Gender
+|--------------------------------------------------------------------------
+*/
+
+if (
+    $gender_filter !== ""
+) {
+
+    $where[] =
+        "gender = ?";
+
+    $params[] =
+        $gender_filter;
 
     $types .= "s";
 }
@@ -1066,7 +1110,7 @@ while (
             display: grid;
 
             grid-template-columns:
-                repeat(4,
+                repeat(5,
                     minmax(0,
                         1fr));
 
@@ -2024,6 +2068,50 @@ RESIDENT REPORT
                     class="resident-report-filter">
 
                     <label
+                        for="gender">
+                        Gender
+                    </label>
+
+
+                    <select
+                        name="gender"
+                        id="gender">
+
+                        <option value="">
+                            All Genders
+                        </option>
+
+
+                        <?php foreach (
+                            $allowed_genders
+                            as $gender
+                        ): ?>
+
+                            <option
+                                value="<?= resident_report_escape($gender) ?>"
+                                <?= $gender_filter === $gender
+                                    ? "selected"
+                                    : ""
+                                ?>>
+
+                                <?= resident_report_escape(
+                                    $gender
+                                ) ?>
+
+                            </option>
+
+                        <?php endforeach; ?>
+
+
+                    </select>
+
+                </div>
+
+
+                <div
+                    class="resident-report-filter">
+
+                    <label
                         for="occupation">
                         Occupation
                     </label>
@@ -2070,7 +2158,7 @@ RESIDENT REPORT
                     <button
                         type="submit"
                         class="btn">
-                        Apply Filters
+                      Filter
                     </button>
 
 
